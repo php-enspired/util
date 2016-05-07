@@ -1,0 +1,25 @@
+{
+  "name": "at-7/util",
+  "description": "Utility classes and mixins.",
+  "type": "library",
+  "homepage": "http://php.enspi.red",
+  "license": "GPL-3.0 (no later licenses permitted)",
+  "authors": [
+    {
+      "name": "Adrian",
+      "email": "adrian@enspi.red",
+      "homepage": "http://enspi.red"
+    }
+  ],
+  "support": {
+    "irc": "irc://irc.freenode.org/at-7"
+  },
+  "require": {
+    "php": "^7.0"
+  },
+  "require-dev": {},
+  "autoload": {
+    "psr-4": {}
+  },
+  "autoload-dev": {}
+}
