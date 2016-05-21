@@ -5,7 +5,7 @@
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
  * @license    GPL-3.0 (no later versions permitted)
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
  *  You MAY NOT apply the terms of any later version of the GPL.
@@ -25,7 +25,7 @@ namespace at\util\exceptable;
 trait exceptable {
 
   /**
-   * @const int   DEFAULT_CODE  the default code for the implementing exception class
+   * @const int  DEFAULT_CODE  the default code for the implementing exception class
    *
    * @const array INFO {
    *    @type array …$code {
