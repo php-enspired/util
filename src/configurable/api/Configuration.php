@@ -41,6 +41,13 @@ use at\util\accessible\api\Accessible,
 interface Configuration extends Accessible, Enumerable {
 
   /**
+   * checks whether the configuration instance is locked (read-only).
+   *
+   * @return bool  true if configuration is locked; false otherwise
+   */
+  public function isLocked() : bool;
+
+  /**
    * makes the configuration instance immutable (read-only). */
   public function lock();
 }
