@@ -23,8 +23,6 @@ namespace at\util\observable\api;
 /**
  * refinement of SplObserver.
  * provides for named events, filtered subscriptions, and passing arbitrary data with updates.
- *
- * implementations MUST be completely interoperable with the native SplSubject/SplObserver interfaces.
  */
 interface Observer extends \SplObserver {
 
@@ -37,13 +35,12 @@ interface Observer extends \SplObserver {
    * passing only a handler will remove that handler.
    *
    * passing only trigger(s) will remove those triggers from all handlers.
-   * as above, if handler's trigger list is emptied, it is removed.
    *
    * @param callable|null $handler     subject handler
-   * @param string|string[]|null       event names to remove
+   * @param string[]|null              event names to remove
    * @throws InvalidArgumentException  if both $handler and $triggers are null
    */
-  public function off( callable $handler=null, $triggers=null );
+  public function off( callable $handler=null, array $triggers=null );
 
   /**
    * registers an update handler for given events.
@@ -51,13 +48,12 @@ interface Observer extends \SplObserver {
    * handlers should use the following signature:
    *  handler( SplSubject $subject [, string $eventName [, mixed …$args]] ) : void
    *
-   * event "triggers" are regular expressions or literal strings.
-   * pass NULL register a handler for "all updates."
+   * event "triggers" are regular expressions; pass NULL to register a handler for "all updates."
    *
-   * @param callable             $handler   the handler to register
-   * @param string|string[]|null $triggers  event names to invoke this handler for
+   * @param callable      $handler   the handler to register
+   * @param string[]|null $triggers  event names to invoke this handler for
    */
-  public function on( callable $handler, $triggers );
+  public function on( callable $handler, array $triggers );
 
   /**
    * @see <http://php.net/SPLObserver.update>

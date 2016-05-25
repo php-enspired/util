@@ -18,27 +18,17 @@
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 declare( strict_types = 1 );
-namespace at\mixin;
+namespace at\util;
 
-use at\util\Regex;
+class Regex {
 
-/**
- * default _parseTrigger() implementation for observer and observable traits. */
-trait observableTrigger {
+  public static function aggregate( string ...$patterns ) : Regex {}
 
-  /**
-   * parses a string as a trigger regex.
-   *
-   * @param string $trigger  the event regex or literal event name
-   * @return string          the parsed event regex
-   */
-  protected function _parseTrigger( string $trigger ) : string {
-    if ( Regex::is_valid( $trigger ) ) {
-      return $trigger;
-    }
-    if ( Regex::is_valid( "(^{$trigger}\b)ui" ) ) {
-      return "(^{$trigger}\b)ui";
-    }
-    return '(^' . preg_quote( $trigger ) . '\b)ui';
-  }
+  public static function quote( string $literal ) : string {}
+
+  public static function valid( string $pattern ) : bool {}
+
+  public function __construct( string $pattern, array $flags=[] ) {}
+
+  public function matches( string $subject ) : bool {}
 }

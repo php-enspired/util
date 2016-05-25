@@ -45,7 +45,6 @@ trait observer {
    */
   public function __construct( array $on=[] ) {
     $this->_handlers = new Map();
-
     try {
       foreach ( $on as $handler=>$triggers ) {
         $this->on( $handler, $triggers );
@@ -57,11 +56,7 @@ trait observer {
 
   /**
    * @see api\Observer */
-  public function off( callable $handler=null, $triggers=null ) {
-    $triggers = array_map(
-      function( $trigger ) { return new Trigger( $trigger ); },
-      ((array) ($triggers ?: []))
-    );
+  public function off( callable $handler=null, array $triggers=null ) {
     switch ( true ) {
       default:
         $error = ObservableException::get_info( ObservableException::TYPEERROR_OFF );
@@ -77,19 +72,14 @@ trait observer {
 
   /**
    * @see api\Observer */
-  public function on( callable $handler, $triggers ) {
-    $triggers = array_map(
-      function( $trigger ) { return new Trigger( $trigger ); },
-      ((array) $triggers)
-    );
+  public function on( callable $handler, array $triggers ) {
     if ( empty( $triggers ) ) {
       throw new ObservableException( ObservableException::NO_TRIGGERS );
     }
-    $triggerList = ($this->_handlers->hasKey( $handler )) ?
-      $this->_handlers->get( $handler ) :
-      new Set();
-    $triggerList->add( ...$triggers );
-    $this->_handlers->put( $handler, $triggerList );
+    if ( ! $this->_handlers->hasKey( $handler ) ) {
+      $this->_handlers->put( $handler, (new Trigger) );
+    }
+    $this->_handlers->get( $handler )->add( ...$triggers );
   }
 
   /**
@@ -128,12 +118,11 @@ trait observer {
     if ( is_callable( [$this, $method] ) ) {
       $handlers[] = [$this, $method];
     }
-    foreach ( $this->_handlers as $handler => $triggerList ) {
-      foreach ( $triggerList as $trigger ) {
-        if ( $trigger->matches( $event ) ) {
-          $handlers[] = $handler;
-          break;
-        }
+
+    foreach ( $this->_handlers as $handler => $trigger ) {
+      if ( $trigger->matches( $event ) ) {
+        $handlers[] = $handler;
+        break;
       }
     }
     return $handlers;
@@ -151,7 +140,7 @@ trait observer {
   /**
    * unregisters triggers from all registered handlers.
    *
-   * @param Trigger[] $triggers  list of trigger(s) to remove
+   * @param string[] $triggers  list of trigger(s) to remove
    */
   protected function _offHandlers( array $triggers ) {
     foreach ( $this->_handlers as $handler ) {
@@ -162,19 +151,13 @@ trait observer {
   /**
    * unregisters triggers from a handler.
    *
-   * @param callable  $handler   the handler to remove
-   * @param Trigger[] $triggers  list of trigger(s) to remove
+   * @param callable $handler   the handler to remove
+   * @param string[] $triggers  list of trigger(s) to remove
    */
   protected function _offTriggers( callable $handler, array $triggers ) {
-    $triggerList = $this->_handlers->get( $handler, null );
-    if ( ! $triggerList ) {
+    if ( ! $this->_handlers->hasKey( $handler ) ) {
       return;
     }
-    foreach ( $triggers as $trigger ) {
-      $triggerList->remove( $trigger );
-    }
-    if ( $triggerList->count() === 0 ) {
-      $this->_offHandler( $handler );
-    }
+    $this->_handlers->get( $handler )->remove( ...$triggers );
   }
 }

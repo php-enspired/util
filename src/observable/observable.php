@@ -42,17 +42,16 @@ trait observable {
   /**
    * @see api\Observable */
   public function attach( \SplObserver $observer ) {
-    $triggers = array_map(
-      function( $trigger ) { return new Trigger( $trigger ); },
-      ((array) (func_get_arg( 1 ) ?: null))
-    );
-    $append = ((bool) (func_get_arg( 2 ) ?: true));
-
-    $triggerList = ($append && $this->_observers->hasKey( $observer )) ?
-      $this->_observers->get( $observer ):
-      new Set;
-    $triggerList->add( ...$triggers );
-    $this->_observers->put( $observer, $triggerList );
+    if ( ! $this->_observers->hasKey( $observer ) ) {
+      $this->_observers->put( $observer, (new Trigger) );
+    }
+    $patterns = (array) (func_get_arg( 1 ) ?: [Trigger::DEFAULT_PATTERN]);
+    $trigger = $this->_observers->get( $observer );
+    // clear existing trigger patterns?
+    if ( func_get_arg( 2 ) ) {
+      $trigger->clear();
+    }
+    $trigger->add( ...$patterns );
   }
 
   /**
@@ -61,16 +60,11 @@ trait observable {
     if ( ! $this->_observers->hasKey( $observer ) ) {
       return;
     }
-    $triggers = array_map(
-      function( $trigger ) { return new Trigger( $trigger ); },
-      ((array) (func_get_arg( 1 ) ?: []))
-    );
-
-    $triggerList = $this->_observers->get( $observer );
-    $triggerList->remove( ...$triggers );
-
-    if ( count( $triggers ) === 0 || $triggerList->count() === 0 ) {
-      $this->_observers->offsetUnset( $observer );
+    $triggers = func_get_arg( 1 );
+    if ( $triggers ) {
+      $this->_observers->get( $observer )->remove( ...$triggers );
+    } else {
+      $this->_observers->remove( $observer );
     }
   }
 
@@ -92,12 +86,10 @@ trait observable {
    */
   protected function _getObservers( string $event ) {
     $observers = [];
-    foreach ( $this->_observers as $observer => $triggerList ) {
-      foreach ( $triggerList as $trigger ) {
-        if ( $trigger->matches( $event ) ) {
-          $observers[] = $observer;
-          break;
-        }
+    foreach ( $this->_observers as $observer => $trigger ) {
+      if ( $trigger->matches( $event ) ) {
+        $observers[] = $observer;
+        break;
       }
     }
     return $observers;
