@@ -151,7 +151,7 @@ trait observer {
   /**
    * unregisters triggers from all registered handlers.
    *
-   * @param string[] $triggers  list of trigger(s) to remove
+   * @param Trigger[] $triggers  list of trigger(s) to remove
    */
   protected function _offHandlers( array $triggers ) {
     foreach ( $this->_handlers as $handler ) {
@@ -162,19 +162,16 @@ trait observer {
   /**
    * unregisters triggers from a handler.
    *
-   * @param callable $handler   the handler to remove
-   * @param string[] $triggers  list of trigger(s) to remove
+   * @param callable  $handler   the handler to remove
+   * @param Trigger[] $triggers  list of trigger(s) to remove
    */
   protected function _offTriggers( callable $handler, array $triggers ) {
-    if ( ! $this->_handlers->offsetExists( $handler ) ) {
+    $triggerList = $this->_handlers->get( $handler, null );
+    if ( ! $triggerList ) {
       return;
     }
-    $triggers = array_map([$this, '_parseTrigger'], $triggers);
-    $triggerList = $this->_handlers->offsetGet( $handler );
-    foreach ( $triggerList as $trigger ) {
-      if ( in_array( $trigger, $triggers ) ) {
-        $triggerList->offsetUnset( $trigger );
-      }
+    foreach ( $triggers as $trigger ) {
+      $triggerList->remove( $trigger );
     }
     if ( $triggerList->count() === 0 ) {
       $this->_offHandler( $handler );
