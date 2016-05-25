@@ -32,6 +32,7 @@ use at\util\accessible\api\Accessible,
  * @method void  Accessible::offsetUnset( mixed $offset )
  * @method void  Accessible::offsetValid( mixed $offset, mixed $value )
  *
+ * @method int    Enumerable::count( void )
  * @method mixed  Enumerable::current( void )
  * @method scalar Enumerable::key( void )
  * @method void   Enumerable::next( void )

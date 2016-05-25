@@ -12,14 +12,20 @@
     }
   ],
   "support": {
-    "irc": "irc://irc.freenode.org/at-7"
+    "irc": "irc://irc.freenode.net/at-7"
   },
   "require": {
-    "php": "^7.0"
+    "php": "^7.0",
+    "php-ds/php-ds": "dev-master"
+  },
+  "suggest": {
+    "ext-ds": "php datastructures extension (replaces php-ds/php-ds)"
   },
   "require-dev": {},
   "autoload": {
-    "psr-4": {}
+    "psr-4": {
+      "at\\util\\": "src/"
+    }
   },
   "autoload-dev": {}
 }

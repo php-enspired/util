@@ -21,7 +21,9 @@ declare( strict_types = 1 );
 namespace at\util\observable;
 
 use at\util\observable\ObservableException,
-    at\util\Set;
+    at\util\observable\Trigger;
+use Ds\Map,
+    Ds\Set;
 
 /**
  * base implementation of Observer (SplObserver).
@@ -32,24 +34,17 @@ use at\util\observable\ObservableException,
 trait observer {
 
   /**
-   * parses a string as a trigger regex.
-   *
-   * @param string $trigger  the event regex or literal event name
-   * @return string          the parsed event regex
-   */
-  abstract protected function _parseTrigger( string $trigger ) : string;
-
-  /**
-   * @type SplObjectStorage $_handlers   handler => trigger events map */
+   * @type Map $_handlers   handler => trigger list map */
   protected $_handlers;
 
   /**
    * trait constructor.
    *
-   * @param array $on  map of handler => triggers to register
+   * @param array $on             map of handler => triggers to register
+   * @throws ObservableException  if invalid arguments are provided for on()
    */
   public function __construct( array $on=[] ) {
-    $this->_handlers = new \SplObjectStorage();
+    $this->_handlers = new Map();
 
     try {
       foreach ( $on as $handler=>$triggers ) {
@@ -63,17 +58,19 @@ trait observer {
   /**
    * @see api\Observer */
   public function off( callable $handler=null, $triggers=null ) {
+    $triggers = array_map(
+      function( $trigger ) { return new Trigger( $trigger ); },
+      ((array) ($triggers ?: []))
+    );
     switch ( true ) {
       default:
         $error = ObservableException::get_info( ObservableException::TYPEERROR_OFF );
         throw new \TypeError( $error['message'], $error['code'] );
       case isset( $handler, $triggers ):
-        settype( $triggers, 'array' );
         return $this->_offTriggers( $handler, $triggers );
       case isset( $handler ):
         return $this->_offHandler( $handler );
       case isset( $triggers ):
-        settype( $triggers, 'array' );
         return $this->_offHandlers( $triggers );
     }
   }
@@ -81,28 +78,18 @@ trait observer {
   /**
    * @see api\Observer */
   public function on( callable $handler, $triggers ) {
-    if ( is_string( $triggers ) ) {
-      settype( $triggers, 'array' );
-    }
-    if ( ! is_array( $triggers ) ) {
-      $error = ObservableException::get_info( ObservableException::TYPEERROR_ON );
-      throw new \TypeError( $error['message'], $error['code'] );
-    }
-    $triggerList = ($this->_handlers->offsetExists( $handler )) ?
-      $this->_handlers->offsetGet( $handler ) :
-      new Set();
-
-    try {
-      foreach ( $triggers as $trigger ) {
-        $triggerList->offsetSet( $this->_parseTrigger( $trigger ) );
-      }
-    } catch ( \Throwable $e ) {
-      throw new ObservableException( ObservableException::INVALID_TRIGGER, $e );
-    }
-    if ( $triggerList->count() === 0 ) {
+    $triggers = array_map(
+      function( $trigger ) { return new Trigger( $trigger ); },
+      ((array) $triggers)
+    );
+    if ( empty( $triggers ) ) {
       throw new ObservableException( ObservableException::NO_TRIGGERS );
     }
-    $this->_handlers->offsetSet( $handler, $triggerList );
+    $triggerList = ($this->_handlers->hasKey( $handler )) ?
+      $this->_handlers->get( $handler ) :
+      new Set();
+    $triggerList->add( ...$triggers );
+    $this->_handlers->put( $handler, $triggerList );
   }
 
   /**
@@ -143,7 +130,7 @@ trait observer {
     }
     foreach ( $this->_handlers as $handler => $triggerList ) {
       foreach ( $triggerList as $trigger ) {
-        if ( preg_match( $trigger, $event ) === 1 ) {
+        if ( $trigger->matches( $event ) ) {
           $handlers[] = $handler;
           break;
         }
@@ -158,16 +145,13 @@ trait observer {
    * @param callable $handler  the handler to remove
    */
   protected function _offHandler( callable $handler ) {
-    if ( ! $this->_handlers->offsetExists( $handler ) ) {
-      return;
-    }
-    $this->_handlers->offsetUnset( $handler );
+    $this->_handlers->remove( $handler );
   }
 
   /**
    * unregisters triggers from all registered handlers.
    *
-   * @param string[] $triggers  list of trigger(s) to remove
+   * @param Trigger[] $triggers  list of trigger(s) to remove
    */
   protected function _offHandlers( array $triggers ) {
     foreach ( $this->_handlers as $handler ) {
@@ -178,19 +162,16 @@ trait observer {
   /**
    * unregisters triggers from a handler.
    *
-   * @param callable $handler   the handler to remove
-   * @param string[] $triggers  list of trigger(s) to remove
+   * @param callable  $handler   the handler to remove
+   * @param Trigger[] $triggers  list of trigger(s) to remove
    */
   protected function _offTriggers( callable $handler, array $triggers ) {
-    if ( ! $this->_handlers->offsetExists( $handler ) ) {
+    $triggerList = $this->_handlers->get( $handler, null );
+    if ( ! $triggerList ) {
       return;
     }
-    $triggers = array_map([$this, '_parseTrigger'], $triggers);
-    $triggerList = $this->_handlers->offsetGet( $handler );
-    foreach ( $triggerList as $trigger ) {
-      if ( in_array( $trigger, $triggers ) ) {
-        $triggerList->offsetUnset( $trigger );
-      }
+    foreach ( $triggers as $trigger ) {
+      $triggerList->remove( $trigger );
     }
     if ( $triggerList->count() === 0 ) {
       $this->_offHandler( $handler );
