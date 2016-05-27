@@ -20,9 +20,8 @@
 declare( strict_types = 1 );
 namespace at\util\configurable;
 
-use at\util\configurable\api\ConfigurationApi,
-    at\util\configurable\Configuration,
-    at\util\configurable\ConfigurationException;
+use at\util\configurable\ConfigurationException;
+use Ds\Map;
 
 /**
  * default implementation for Configurable interface.
@@ -38,11 +37,8 @@ use at\util\configurable\api\ConfigurationApi,
 trait configurable {
 
   /**
-   * @type Configuration $_configuration       configuration object for this instance
-   * @type string        $_configurationClass  fqcn of Configuration class to use
-   */
+   * @type Map  configuration map for this instance. */
   protected $_configuration;
-  protected $_configurationClass = Configuration::class;
 
   /**
    * trait constructor.
@@ -50,14 +46,14 @@ trait configurable {
    * @param array $options  map of configuration options
    */
   public function __construct( array $options=[] ) {
-    $this->_configuration = $this->_buildConfiguration( $options );
+    $this->_configuration = $this->_buildConfiguration()->merge( $options );
     $this->_autoConfigure();
   }
 
   /**
    * @see Configurable::config() */
   public function config( string $setting ) {
-    return $this->_configuration->offsetGet( $setting );
+    return $this->_configuration->get( $setting, null );
   }
 
   /**
@@ -68,6 +64,9 @@ trait configurable {
   protected function _autoConfigure() {
     try {
       foreach ( $this->_configuration as $option=>$setting ) {
+        if ( ! is_string( $option ) ) {
+          continue;
+        }
         if ( method_exists( $this, "add{$option}" ) ) {
           if ( ! is_array( $setting ) ) {
             throw new ConfigurationException(
@@ -100,15 +99,11 @@ trait configurable {
   }
 
   /**
-   * provides a configuration object using provided and/or default settings.
+   * provides a configuration object with default settings.
    *
-   * @param array $settings  map of configuration options passed at runtime
-   * @return Configuration
+   * @return Map
    */
-  protected function _buildConfiguration( array $settings ) : ConfigurationApi {
-    if ( ! is_a( $this->_configurationClass, ConfigurationApi::class, true ) ) {
-      throw new ConfigurableException( ConfigurableException::INVALID_CONFIG_CLASS );
-    }
-    return new $this->_configurationClass( $settings );
+  protected function _buildConfiguration() : Map {
+    return new Map;
   }
 }

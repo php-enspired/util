@@ -72,11 +72,6 @@ class ConfigurableException extends \RuntimeException implements ExceptableApi {
       'code' => self::CONFIG_LOCKED,
       'message' => 'cannot write option (configuration is locked)',
       'severity' => E_NOTICE
-    ],
-    self::INVALID_CONFIG_CLASS => [
-      'code' => self::INVALID_CONFIG_CLASS,
-      'message' => '$_configurationClass must extend ' . Configurable::class,
-      'severity' => E_ERROR
     ]
   ];
 }
