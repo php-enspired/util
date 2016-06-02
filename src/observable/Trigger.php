@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions permitted)
+ * @license    GPL-3.0 (no other versions permitted)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any later version of the GPL.
+ *  You MAY NOT apply the terms of any other version of the GPL.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -28,15 +28,15 @@ use Ds\Set;
  * aggregates and matches event name patterns.
  *
  * patterns may be provided as:
- *  - regular expressions (sans delimiters and flags)
- *  - regular expression fragments (^ anchor and trailing \b will be added)
- *  - literal event names (^ anchor and trailing \b will be added)
+ *  - regular expressions (sans delimiters, ^$ anchors, and flags)
+ *  - literal event names
+ *
  */
 class Trigger {
 
   /**
    * @type string  default (wildcard) trigger pattern. */
-  const DEFAULT_PATTERN = '(.*)';
+  const DEFAULT_PATTERN = '.*';
 
   /**
    * @type Set  collection of patterns that match this trigger. */
@@ -47,19 +47,15 @@ class Trigger {
   protected $_regex;
 
   /**
-   * @param string …$patterns  pattern(s) to register to match this trigger
    */
-  public function __construct( string ...$patterns ) {
+  public function __construct() {
     $this->_patterns = new Set;
-    if ( ! empty( $patterns ) ) {
-      $this->add( ...$patterns );
-    }
   }
 
   /**
-   * parses and registers given patterns with the trigger.
+   * parses and registers given pattern(s) with the trigger.
    *
-   * @param string …$patterns  pattern(s) to register
+   * @param string $patterns  pattern(s) to register
    */
   public function add( string ...$patterns ) {
     $this->_regex = null;
@@ -70,7 +66,7 @@ class Trigger {
    * clears all patterns from this trigger. */
   public function clear() {
     $this->_regex = null;
-    $this->_patterns = [];
+    $this->_patterns->clear();
   }
 
   /**
@@ -80,8 +76,12 @@ class Trigger {
    * @return bool          true if event name matches trigger; false otherwise
    */
   public function matches( string $event ) {
-    if ( ! $this->_regex ) {
-      $this->_regex = Regex::aggregate( ...$this->_patterns );
+    if ( $this->_patterns->isEmpty() ) {
+      return false;
+    }
+    if ( $this->_regex === null ) {
+      $aggregateRx = "(?|{$this->_patterns->join( '|' )})";
+      $this->_regex = new Regex( $aggregateRx, Regex::MOD['u'] );
     }
     return $this->_regex()->matches( $event );
   }
@@ -99,15 +99,12 @@ class Trigger {
   /**
    * parses a string as a trigger regex.
    *
-   * @param string $trigger  regex|fragment|literal event name
+   * @param string $pattern  event name
    * @return string          the parsed pattern
    */
   protected function _parse( string $pattern ) : string {
-    if ( ! Regex::valid( "({$pattern})" ) ) {
-      $pattern = (Regex::valid( "(^{$pattern}\b)" )) ?
-        "(^{$pattern}\b)" :
-        '(^' . Regex::quote( $pattern ) . '\b)';
-    }
-    return $pattern;
+    return (Regex::valid( $pattern )) ?
+      $pattern :
+      Regex::quote( $pattern );
   }
 }

@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions permitted)
+ * @license    GPL-3.0 (no other versions permitted)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any later version of the GPL.
+ *  You MAY NOT apply the terms of any other version of the GPL.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -29,10 +29,10 @@ use Ds\Map;
  * accepts a map of runtime configuration options.
  *
  * for any option where the implementation defines a corresponding "add{option}" method,
- * that option will be treated as a list of argument lists for the "add{option}" method.
+ * that option's value should be an array of argument lists for that "add{option}" method.
  *
  * likewise, where the implementation defines a "set{option}" method,
- * that method will be invoked using the option's value.
+ * that option's value should be an argument list for that "set{option}" method.
  */
 trait configurable {
 
