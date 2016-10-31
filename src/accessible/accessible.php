@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\accessible;
 
 use at\util\accessible\AccessibleException,
@@ -30,10 +30,10 @@ use at\util\accessible\AccessibleException,
  * otherwise, by default, offsets may be added/removed from the dataset freely.
  *
  * supports custom property accessor methods:
- *  - @method mixed get{offset}( void )            reads a value for the offset
- *  - @method void  set{offset}( mixed $value )    writes a value for the offset
- *  - @method void  unset{offset}( void )          removes a value for the offset
- *  - @method bool  valid{offset}( mixed $value )  validates a value for the offset
+ *  - @method mixed get{offset}(void)            reads a value for the offset
+ *  - @method void  set{offset}(mixed $value)    writes a value for the offset
+ *  - @method void  unset{offset}(void)          removes a value for the offset
+ *  - @method bool  valid{offset}(mixed $value)  validates a value for the offset
  */
 trait accessible {
 
@@ -46,23 +46,23 @@ trait accessible {
 
   /**
    * @see Accessible::offsetExists() */
-  public function offsetExists( $offset ) : bool {
-    if ( ! is_scalar( $offset ) ) {
+  public function offsetExists($offset) : bool {
+    if (! is_scalar($offset)) {
       return false;
     }
-    return (method_exists( $this, "get{$offset}" ) || in_array( $offset, $this->offsets() ));
+    return (method_exists($this, "get{$offset}") || in_array($offset, $this->offsets()));
   }
 
   /**
    * @see Accessible::offsetGet() */
-  public function offsetGet( $offset ) {
-    if ( ! $this->offsetExists( $offset ) ) {
+  public function offsetGet($offset) {
+    if (! $this->offsetExists($offset)) {
       throw new AccessibleException(
         AccessibleException::INVALID_OFFSET,
         ['offset' => $offset]
-      );
+     );
     }
-    return (method_exists( $this, "get{$offset}" )) ?
+    return (method_exists($this, "get{$offset}")) ?
       $this->{"get{$offset}"}() :
       $this->_data[$offset];
   }
@@ -70,26 +70,26 @@ trait accessible {
   /**
    * @see Accessible::offsets() */
   public function offsets() : array {
-    return (is_array( $this->_offsets )) ?
+    return (is_array($this->_offsets)) ?
       $this->_offsets :
-      array_keys( $this->_data );
+      array_keys($this->_data);
   }
 
   /**
    * @see Accessible::offsetSet() */
-  public function offsetSet( $offset, $value ) {
-    if ( ! $this->offsetValid( $offset, $value ) ) {
-      $code = ($this->offsetExists( $offset )) ?
+  public function offsetSet($offset, $value) {
+    if (! $this->offsetValid($offset, $value)) {
+      $code = ($this->offsetExists($offset)) ?
         AccessibleException::INVALID_VALUE :
         AccessibleException::INVALID_OFFSET;
       throw new AccessibleException(
         $code,
-        ['offset' => $offset, 'value' => Vars::debug( $value )]
-      );
+        ['offset' => $offset, 'value' => Vars::debug($value)]
+     );
     }
 
-    if ( method_exists( $this, "set{$offset}" ) ) {
-      $this->{"set{$offset}"}( $value );
+    if (method_exists($this, "set{$offset}")) {
+      $this->{"set{$offset}"}($value);
       return;
     }
     $this->_data[$offset] = $value;
@@ -97,23 +97,23 @@ trait accessible {
 
   /**
    * @see Accessible::offsetUnset() */
-  public function offsetUnset( $offset ) {
-    if ( method_exists( $this, "unset{$offset}" ) ) {
+  public function offsetUnset($offset) {
+    if (method_exists($this, "unset{$offset}")) {
       $this->{"unset{$offset}"}();
       return;
     }
-    $this->offsetSet( $offset, null );
+    $this->offsetSet($offset, null);
   }
 
   /**
    * @see Accessible::offsetValid() */
-  public function offsetValid( $offset, $value ) : bool {
-    if ( method_exists( $this, "valid{$offset}" ) ) {
-      return $this->{"valid{$offset}"}( $value );
+  public function offsetValid($offset, $value) : bool {
+    if (method_exists($this, "valid{$offset}")) {
+      return $this->{"valid{$offset}"}($value);
     }
     return ($this->_offsets === null) ?
-      is_scalar( $offset ) :
-      $this->offsetExists( $offset );
+      is_scalar($offset) :
+      $this->offsetExists($offset);
   }
 
   /**
@@ -121,7 +121,7 @@ trait accessible {
    *
    * @param string[]|null $offsets  offset names for dataset (NULL = allow any offsets)
    */
-  protected function _setOffsets( array $offsets=null ) {
+  protected function _setOffsets(array $offsets=null) {
     $this->_offsets = $offsets;
   }
 }

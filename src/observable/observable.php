@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\observable;
 
 use at\util\observable\ObservableException,
@@ -41,30 +41,30 @@ trait observable {
 
   /**
    * @see api\Observable */
-  public function attach( \SplObserver $observer ) {
-    if ( ! $this->_observers->hasKey( $observer ) ) {
-      $this->_observers->put( $observer, (new Trigger) );
+  public function attach(\SplObserver $observer) {
+    if (! $this->_observers->hasKey($observer)) {
+      $this->_observers->put($observer, (new Trigger));
     }
-    $patterns = (array) (func_get_arg( 1 ) ?: [Trigger::DEFAULT_PATTERN]);
-    $trigger = $this->_observers->get( $observer );
+    $patterns = (array) (func_get_arg(1) ?: [Trigger::DEFAULT_PATTERN]);
+    $trigger = $this->_observers->get($observer);
     // clear existing trigger patterns?
-    if ( func_get_arg( 2 ) ) {
+    if (func_get_arg(2)) {
       $trigger->clear();
     }
-    $trigger->add( ...$patterns );
+    $trigger->add(...$patterns);
   }
 
   /**
    * @see api\Observable */
-  public function detach( \SplObserver $observer ) {
-    if ( ! $this->_observers->hasKey( $observer ) ) {
+  public function detach(\SplObserver $observer) {
+    if (! $this->_observers->hasKey($observer)) {
       return;
     }
-    $triggers = func_get_arg( 1 );
-    if ( $triggers ) {
-      $this->_observers->get( $observer )->remove( ...$triggers );
+    $triggers = func_get_arg(1);
+    if ($triggers) {
+      $this->_observers->get($observer)->remove(...$triggers);
     } else {
-      $this->_observers->remove( $observer );
+      $this->_observers->remove($observer);
     }
   }
 
@@ -72,9 +72,9 @@ trait observable {
    * @see api\Observable */
   public function notify() {
     $args = func_get_args();
-    $event = array_shift( $args ) ?? 'update';
-    foreach ( $this->_getObservers( $event ) as $observer ) {
-      $observer->update( $this, $event, ...$args );
+    $event = array_shift($args) ?? 'update';
+    foreach ($this->_getObservers($event) as $observer) {
+      $observer->update($this, $event, ...$args);
     }
   }
 
@@ -84,10 +84,10 @@ trait observable {
    * @param string $event  the event name to filter by
    * @return array         list of observers
    */
-  protected function _getObservers( string $event ) {
+  protected function _getObservers(string $event) {
     $observers = [];
-    foreach ( $this->_observers as $observer => $trigger ) {
-      if ( $trigger->matches( $event ) ) {
+    foreach ($this->_observers as $observer => $trigger) {
+      if ($trigger->matches($event)) {
         $observers[] = $observer;
         break;
       }

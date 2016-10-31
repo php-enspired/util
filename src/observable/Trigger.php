@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\observable;
 
 use at\util\observable\ObservableException,
@@ -57,9 +57,9 @@ class Trigger {
    *
    * @param string $patterns  pattern(s) to register
    */
-  public function add( string ...$patterns ) {
+  public function add(string ...$patterns) {
     $this->_regex = null;
-    $this->_patterns->add( ...array_map( [$this, '_parse'], $patterns ) );
+    $this->_patterns->add(...array_map([$this, '_parse'], $patterns));
   }
 
   /**
@@ -75,15 +75,15 @@ class Trigger {
    * @param string $event  the event name to test
    * @return bool          true if event name matches trigger; false otherwise
    */
-  public function matches( string $event ) {
-    if ( $this->_patterns->isEmpty() ) {
+  public function matches(string $event) {
+    if ($this->_patterns->isEmpty()) {
       return false;
     }
-    if ( $this->_regex === null ) {
-      $aggregateRx = "(?|{$this->_patterns->join( '|' )})";
-      $this->_regex = new Regex( $aggregateRx, Regex::MOD['u'] );
+    if ($this->_regex === null) {
+      $aggregateRx = "(?|{$this->_patterns->join('|')})";
+      $this->_regex = new Regex($aggregateRx, Regex::MOD['u']);
     }
-    return $this->_regex()->matches( $event );
+    return $this->_regex()->matches($event);
   }
 
   /**
@@ -91,9 +91,9 @@ class Trigger {
    *
    * @param string …$patterns  pattern(s) to remove
    */
-  public function remove( string ...$patterns ) {
+  public function remove(string ...$patterns) {
     $this->_regex = null;
-    $this->_patterns->remove( ...array_map( [$this, '_parse'], $patterns ) );
+    $this->_patterns->remove(...array_map([$this, '_parse'], $patterns));
   }
 
   /**
@@ -102,9 +102,9 @@ class Trigger {
    * @param string $pattern  event name
    * @return string          the parsed pattern
    */
-  protected function _parse( string $pattern ) : string {
-    return (Regex::valid( $pattern )) ?
+  protected function _parse(string $pattern) : string {
+    return (Regex::valid($pattern)) ?
       $pattern :
-      Regex::quote( $pattern );
+      Regex::quote($pattern);
   }
 }

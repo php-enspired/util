@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\accessible\api;
 
 /**
@@ -34,7 +34,7 @@ interface Accessible {
    * @param mixed $offset  the offset to check
    * @return bool          true if offset exists; false otherwise
    */
-  public function offsetExists( $offset ) : bool;
+  public function offsetExists($offset) : bool;
 
   /**
    * gets the value at a given offset.
@@ -43,7 +43,7 @@ interface Accessible {
    * @throws AccessibleException  if the offset does not exist in the dataset
    * @return mixed                the value of the given offset on success
    */
-  public function offsetGet( $offset );
+  public function offsetGet($offset);
 
   /**
    * gets list of offsets in the dataset.
@@ -60,7 +60,7 @@ interface Accessible {
    * @param mixed $value          the value to assign
    * @throws AccessibleException  if the offset cannot be set
    */
-  public function offsetSet( $offset, $value );
+  public function offsetSet($offset, $value);
 
   /**
    * removes an offset.
@@ -70,7 +70,7 @@ interface Accessible {
    * @param mixed $offset         the offset to remove
    * @throws AccessibleException  if the offset cannot be unset
    */
-  public function offsetUnset( $offset );
+  public function offsetUnset($offset);
 
   /**
    * checks whether a value is valid for (can be written to) a given offset.
@@ -79,5 +79,5 @@ interface Accessible {
    * @param mixed $value   the value to assign
    * @return bool          true if the value is valid for the given offset; false otherwise
    */
-  public function offsetValid( $offset, $value ) : bool;
+  public function offsetValid($offset, $value) : bool;
 }

@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\observable\api;
 
 /**
@@ -40,20 +40,20 @@ interface Observer extends \SplObserver {
    * @param string[]|null              event names to remove
    * @throws InvalidArgumentException  if both $handler and $triggers are null
    */
-  public function off( callable $handler=null, array $triggers=null );
+  public function off(callable $handler=null, array $triggers=null);
 
   /**
    * registers an update handler for given events.
    *
    * handlers should use the following signature:
-   *  handler( SplSubject $subject [, string $eventName [, mixed …$args]] ) : void
+   *  handler(SplSubject $subject [, string $eventName [, mixed …$args]]) : void
    *
    * event "triggers" are regular expressions; pass NULL to register a handler for "all updates."
    *
    * @param callable      $handler   the handler to register
    * @param string[]|null $triggers  event names to invoke this handler for
    */
-  public function on( callable $handler, array $triggers );
+  public function on(callable $handler, array $triggers);
 
   /**
    * @see <http://php.net/SPLObserver.update>
@@ -70,5 +70,5 @@ interface Observer extends \SplObserver {
    * @param mixed      $…         additional arguments for update
    * @throws ObservableException  if an uncaught exception is thrown during update
    */
-  public function update( \SplSubject $subject );
+  public function update(\SplSubject $subject);
 }

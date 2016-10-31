@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,28 +17,29 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\exceptable\api;
 
 /**
  * augmented interface for exceptions.
- * the implementing class must extend from a Throwable class (e.g., RuntimeException).
  *
- * caution:
- *  - if the implementing class needs to extend ErrorException
- *    (which already has a (final) method getSeverity()),
- *    exceptable::getSeverity() will need to be aliased when the trait is used.
- *  - implementations cannot extend from PDOException,
- *    because its implementation of getCode() returns a string.
+ * @method string    Throwable::__toString( void )
+ * @method int       Throwable::getCode( void )
+ * @method string    Throwable::getFile( void )
+ * @method int       Throwable::getLine( void )
+ * @method string    Throwable::getMessage( void )
+ * @method Throwable Throwable::getPrevious( void )
+ * @method array     Throwable::getTrace( void )
+ * @method string    Throwable::getTraceAsString( void )
+ *
+ * @method mixed JsonSerializable::jsonSerialize( void )
  */
-interface Exceptable extends \Throwable {
+interface Exceptable extends \Throwable, \JsonSerializable {
 
   /**
-   * gets the default exception code for the implementing class.
-   *
-   * @return int  the default exception code
+   * @type int  default exception code for unknown/generic exception cases.
    */
-  public static function get_default_code() : int;
+  const DEFAULT_CODE = 0;
 
   /**
    * gets information about a code known to the implementing class.
@@ -48,7 +49,7 @@ interface Exceptable extends \Throwable {
    * @return array               a map of info about the code,
    *                             including (at a minimum) its "code", "severity", and "message".
    */
-  public static function get_info( int $code ) : array;
+  public static function get_info(int $code) : array;
 
   /**
    * checks whether the implementation has info about the given code.
@@ -56,7 +57,7 @@ interface Exceptable extends \Throwable {
    * @param int $code  the code to check
    * @return bool      true if the code is known; false otherwise
    */
-  public static function has_info( int $code ) : bool;
+  public static function has_info(int $code) : bool;
 
   /**
    * @param string    $0  exception message
@@ -66,7 +67,7 @@ interface Exceptable extends \Throwable {
    * @param Throwable $2  previous exception
    * @param array     $3  additional implementation-specific info
    */
-  public function __construct( ...$args );
+  public function __construct(...$args);
 
   /**
    * traverses the chain of previous exception(s) and gets the root exception.
@@ -78,7 +79,7 @@ interface Exceptable extends \Throwable {
   /**
    * gets exception severity.
    *
-   * @return int  the exception severity (one of the E_** constants)
+   * @return int  the exception severity
    */
   public function getSeverity() : int;
 }

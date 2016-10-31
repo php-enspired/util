@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
- * 
+ * @license    GPL-3.0 (no later versions)
+ *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util;
 
 /**
@@ -25,12 +25,12 @@ namespace at\util;
 class JSON {
 
   /**
-   * @type bool DEFAULT_ASSOC           decode maps as arrays?
-   * @type int  DEFAULT_DECODE_OPTIONS  preferred options for json_decode
-   * @type int  DEFAULT_ENCODE_OPTIONS  preferred options for json_encode
-   * @type int  DEFAULT_DEPTH           default depth
-   * @type int  HEX_ALL                 all JSON_HEX_* options
-   * @type int  PRETTY                  default encoding options + pretty printing
+   * @type bool DEFAULT_ASSOC           prefer decoding data as arrays.
+   * @type int  DEFAULT_DECODE_OPTIONS  preferred options for json_decode.
+   * @type int  DEFAULT_ENCODE_OPTIONS  preferred options for json_encode.
+   * @type int  DEFAULT_DEPTH           default depth.
+   * @type int  HEX_ALL                 all JSON_HEX_* options.
+   * @type int  PRETTY                  default encoding options + pretty printing.
    */
   const DEFAULT_ASSOC = true;
   const DEFAULT_DECODE_OPTIONS = JSON_BIGINT_AS_STRING;
@@ -51,19 +51,22 @@ class JSON {
    *
    * @param string $json       the json string to decode
    * @param array  $opts {
-   *    @type bool $assoc    decode as associative array?
-   *    @type int  $depth    recursion limit
-   *    @type int  $options  bitmask of json_decode options
+   *    @type bool $assoc|$0    decode as associative array?
+   *    @type int  $options|$1  bitmask of json_decode options
+   *    @type int  $depth|$2    recursion limit
    *  }
    * @throws RuntimeException  if json_decode fails
    * @return mixed             the decoded json data on success
    */
-  public static function decode( string $json, array $opts=[] ) {
-    $assoc = $opts['assoc'] ?? self::DEFAULT_ASSOC;
-    $depth = $opts['depth'] ?? self::DEFAULT_DEPTH;
-    $options = $opts['options'] ?? self::DEFAULT_DECODE_OPTIONS;
+  public static function decode(string $json, array $opts=[]) {
+    $assoc = $opts['assoc'] ?? $opts[0] ?? self::DEFAULT_ASSOC;
+    Vars::typeHint($assoc, 'bool', '$opts[assoc]');
+    $options = $opts['options'] ?? $opts[1] ?? self::DEFAULT_DECODE_OPTIONS;
+    Vars::typeHint($options, 'int', '$opts[options]');
+    $depth = $opts['depth'] ?? $opts[2] ?? self::DEFAULT_DEPTH;
+    Vars::typeHint($depth, 'int', '$opts[depth]');
 
-    $value = json_decode( $json, $assoc, $depth, $options );
+    $value = json_decode($json, $assoc, $depth, $options);
     self::_json_error_check();
     return $value;
   }
@@ -73,15 +76,20 @@ class JSON {
    * @see <http://php.net/json_encode>
    *
    * @param mixed $data        the data to encode
-   * @param array $opts        options, depth
+   * @param array $opts {
+   *    @type int $options|$0  bitmask of json_encode options
+   *    @type int $depth|$1    recursion limit
+   *  }
    * @throws RuntimeException  if json_encode fails
    * @return string            the encoded json string on success
    */
-  public static function encode( $data, array $opts ): string {
-    $options = $opts['options'] ?? self::DEFAULT_ENCODE_OPTIONS;
-    $depth = $opts['depth'] ?? self::DEFAULT_DEPTH;
+  public static function encode($data, array $opts): string {
+    $options = $opts['options'] ?? $opts[0] ?? self::DEFAULT_ENCODE_OPTIONS;
+    Vars::typeHint($options, 'int', '$opts[options]');
+    $depth = $opts['depth'] ?? $opts[1] ?? self::DEFAULT_DEPTH;
+    Vars::typeHint($depth, 'int', '$opts[depth]');
 
-    $json = json_encode( $data, $options, $depth );
+    $json = json_encode($data, $options, $depth);
     self::_json_error_check();
     return $json;
   }
@@ -92,11 +100,11 @@ class JSON {
    * @param mixed $value   the value to check
    * @return bool          true if value is valid json; false otherwise
    */
-  public static function is_json( $value ) {
+  public static function is_json($value) {
     try {
-      self::decode( $value );
+      self::decode($value);
       return true;
-    } catch ( \RuntimeException $e ) {
+    } catch (\RuntimeException $e) {
       return false;
     }
   }
@@ -108,9 +116,9 @@ class JSON {
    */
   private static function _json_error_check() {
     $code = json_last_error();
-    if ( $code === JSON_ERROR_NONE ) {
+    if ($code === JSON_ERROR_NONE) {
       return;
     }
-    throw new \RuntimeException( json_last_error_msg(), $code );
+    throw new \RuntimeException(json_last_error_msg(), $code);
   }
 }

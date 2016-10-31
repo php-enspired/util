@@ -4,11 +4,11 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no other versions permitted)
+ * @license    GPL-3.0 (no later versions)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
- *  You MAY NOT apply the terms of any other version of the GPL.
+ *  The right to apply the terms of later versions of the GPL is RESERVED.
  *
  *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License along with this program.
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
-declare( strict_types = 1 );
+declare(strict_types = 1);
 namespace at\util\observable\api;
 
 /**
@@ -26,7 +26,7 @@ namespace at\util\observable\api;
  *
  * implementations should document what events they send notifications on.
  * the following annotation format is recommended:
- *    '@observable "<event name>"( <update argument list> )'
+ *    '@observable "<event name>"(<update argument list>)'
  *
  * event names are arbitrary.
  * it is suggested that event names be comprised of "word" characters (\w),
@@ -49,7 +49,7 @@ interface Observable extends \SplSubject {
    * @param string|string[] $1         list of triggers (regexes) to update observer on
    * @param bool            $2         clear existing trigger list (defaults to FALSE)?
    */
-  public function attach( \SplObserver $observer );
+  public function attach(\SplObserver $observer);
 
   /**
    * @see <http://php.net/SPLSubject.detach>
@@ -61,7 +61,7 @@ interface Observable extends \SplSubject {
    * @param SplObserver  $observer  the observer to unregister (events from)
    * @param array|string $1         list of event names to remove
    */
-  public function detach( \SplObserver $observer );
+  public function detach(\SplObserver $observer);
 
   /**
    * @see <http://php.net/SPLSubject.notify>
