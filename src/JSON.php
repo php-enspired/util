@@ -4,7 +4,7 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions)
+ * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
@@ -21,7 +21,8 @@ declare(strict_types = 1);
 namespace at\util;
 
 /**
- * wraps JSON functions with sensible defaults and error handling boilerplate. */
+ * wraps JSON functions with sensible defaults and error handling boilerplate.
+ */
 class JSON {
 
   /**
@@ -29,7 +30,7 @@ class JSON {
    * @type int  DEFAULT_DECODE_OPTIONS  preferred options for json_decode.
    * @type int  DEFAULT_ENCODE_OPTIONS  preferred options for json_encode.
    * @type int  DEFAULT_DEPTH           default depth.
-   * @type int  HEX_ALL                 all JSON_HEX_* options.
+   * @type int  HEX                     all JSON_HEX_* options.
    * @type int  PRETTY                  default encoding options + pretty printing.
    */
   const DEFAULT_ASSOC = true;
@@ -39,7 +40,7 @@ class JSON {
     | JSON_UNESCAPED_SLASHES
     | JSON_UNESCAPED_UNICODE;
   const DEFAULT_DEPTH = 512;
-  const HEX_ALL = JSON_HEX_QUOT
+  const HEX = JSON_HEX_QUOT
     | JSON_HEX_TAG
     | JSON_HEX_AMP
     | JSON_HEX_APOS;

@@ -4,7 +4,7 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions)
+ * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
@@ -120,7 +120,9 @@ class Vars {
     if (! self::typeCheck($arg, ...$types)) {
       $l = implode('|', $types);
       $t = self::type($arg);
-      $m = "{$name} must be one of {$l}; {$t} provided";
+      $m = (count($types) === 1) ?
+        "{$name} must be {$l}; {$t} provided" :
+        "{$name} must be one of {$l}; {$t} provided";
       throw new \TypeError($m, E_WARNING);
     }
   }

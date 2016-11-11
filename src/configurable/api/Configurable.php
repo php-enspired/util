@@ -4,7 +4,7 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions)
+ * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
@@ -18,7 +18,7 @@
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 declare(strict_types = 1);
-namespace at\util\configurable\api;
+namespace at\configurable\api;
 
 /**
  * interface for objects which accept runtime configurations. */

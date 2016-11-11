@@ -4,7 +4,7 @@
  * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
- * @license    GPL-3.0 (no later versions)
+ * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
  *  under the terms of the GNU General Public License, version 3.
@@ -218,7 +218,7 @@ class Arrays {
       throw new \InvalidArgumentException('$number must be positive integer');
     }
 
-    $max = count($subject);
+    $count = count($subject);
     if ($number > $count) {
       throw new \UnderflowException("\$subject array contains fewer than {$number} items");
     }
@@ -230,7 +230,7 @@ class Arrays {
 
     $randoms = [];
     for ($i=0; $i<$number; $i++) {
-      $random = random_int(0, $max);
+      $random = random_int(0, $count);
       $randoms[] = $keys[$random];
       unset($keys[$random]);
     }
