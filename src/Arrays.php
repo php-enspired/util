@@ -1,7 +1,6 @@
 <?php
 /**
  * @package    at.util
- * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
  * @license    GPL-3.0 (only)
@@ -18,33 +17,78 @@
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 declare(strict_types = 1);
+
 namespace at\util;
 
-use at\util\JSON,
-    at\util\Vars;
+use at\util\ArraysException;
 
 /**
  * utility functions for arrays. */
 class Arrays {
 
+  /** @type callable[]  list of supported array sorting functions. */
+  const SORT_FUNCTIONS = [
+    'arsort',
+    'asort',
+    'krsort',
+    'ksort',
+    'natcasesort',
+    'natsort',
+    'rsort',
+    'shuffle',
+    'sort',
+    'uasort',
+    'uksort',
+    'usort'
+  ];
+
   /**
-   * organizes array items into categories based on given key name.
+   * proxies native php array functions.
    *
-   * @param array $subject         the subject array
-   * @param array $index           key of column to categorize by
-   * @throws OutOfBoundsException  if key is not present in all rows
-   * @return array                 the categorized array
+   * supports sorting functions (does not modify the input array) and all "array_*" functions.
+   * compact(), extract(), and pointer functions (e.g., current(), each()) are not supported.
+   * the user is responsible for argument types/order.
+   */
+  public static function __callStatic($name, $arguments) {
+    if (in_array($name, self::SORT_FUNCTIONS)) {
+      call_user_func_array($name, $arguments);
+      return $arguments[0];
+    }
+
+    if (! function_exists("array_{$name}")) {
+      throw new ArraysException(ArraysException::NO_SUCH_METHOD);
+    }
+    return call_user_func_array("array_{$name}", $arguments);
+  }
+
+  /**
+   * sorts array items into categories based on given key name.
+   *
+   * @param array $subject   the subject array
+   * @param array $index     key of column to categorize by
+   * @throws ArraysExeption  if key is not present in all rows
+   * @return array           the categorized array
    */
   public static function categorize(array $subject, $key) {
-    Vars::typeHint($key, 'string', 'int');
     $categorized = [];
-    foreach ($array as $row) {
+    foreach ($subject as $row) {
       if (! isset($row[$key])) {
-        throw new \OutOfBoundsException("\$key [{$key}] must be present in all rows");
+        throw new ArraysException(ArraysException::INVALID_CATEGORY_KEY, ['key' => $key]);
       }
-      $categorized[$key] = $row;
+      $categorized[$row[$key]][] = $row;
     }
     return $categorized;
+  }
+
+  /**
+   * checks whether a given value is in the subject array (values are compared strictly).
+   *
+   * @param array $subject  the subject array
+   * @param mixed $value    the value to check for
+   * @return bool           true if value exists in subject; false otherwise
+   */
+  public static function contains(array $subject, $value) : bool {
+    return in_array($value, $subject, true);
   }
 
   /**
@@ -68,8 +112,7 @@ class Arrays {
     foreach (explode($opts['delim'], $path) as $key) {
       if (! (is_array($subject) && isset($subject[$key]))) {
         if ($opts['throw']) {
-          $m = "\$path [{$path}] does not exist in subject array";
-          throw new \OutOfBoundsException($m, E_USER_NOTICE);
+          throw new ArraysException(ArraysException::INVALID_PATH, ['path' => $path]);
         }
         return null;
       }
@@ -102,91 +145,19 @@ class Arrays {
   }
 
   /**
-   * filters variables based on a callback map.
+   * indexes an array using the values of the given key
+   * (on index collision, later values will replace earlier values).
    *
-   * {@see http://php.net/filter_var_array} for details about building filter definitions.
-   * in addition, allows "shorthand" filter definitions:
-   *  - if $definition is callable, it will be applied to the entire array using FILTER_CALLBACK.
-   *  - if a $definition value is NULL, that key will use FILTER_DEFAULT.
-   *  - if a $definition value is callable, that key will use FILTER_CALLBACK.
-   *  - if a $definition value is a Regex instance, that key will use FILTER_VALIDATE_REGEXP.
-   *
-   * callable filters use the following signature:
-   *  filter_callback(mixed $value) : mixed
-   *
-   * like filter_var_array, values can be arrays, but filter definitions cannot be nested.
-   * to validate an item with nested arrays,
-   * pass a callback function to the base key which contains the validation logic.
-   *
-   * @param array $vars                the variables to filter
-   * @param mixed $definition          filter definition
-   * @param bool  $add_empty           add missing items (as NULL) to the returned array
-   * @throws UnexpectedValueException  if a provided callback throws
-   * @throws BadFunctionCallException  if filter definition is invalid
-   * @return array                     the filtered variables
+   * @param array      $subject  the subject array
+   * @param string|int $key      the key to index by
+   * @return array               the indexed array
    */
-  public static function filter(array $vars, $definition, $add_empty=true): array {
-    try {
-      if ($definition === null) {
-        $definition = FILTER_DEFAULT;
-      } elseif (is_callable($definition)) {
-        $definition = array_fill_keys(array_keys($vars), $definition);
-      }
-      if (is_array($definition)) {
-        foreach ($definition as &$i) {
-          if ($i === null) {
-            $i = FILTER_DEFAULT;
-          } elseif ($i instanceof Regex) {
-            $i = [
-              "filter"  => FILTER_VALIDATE_REGEXP,
-              "options" => ["regexp" => $i->__toString()]
-            ];
-          } elseif (is_callable($i)) {
-            $i = [
-              "filter"  => FILTER_CALLBACK,
-              "options" => $i
-            ];
-          }
-        }
-      }
-
-      $result = filter_var_array($vars, $definition, $add_empty);
-    } catch (\Throwable $e) {
-      $m = "uncaught exception thrown from filter: {$e->getMessage()}";
-      throw new \RuntimeException($m, $e->getCode(), $e);
-    }
-    if (! is_array($result)) {
-      $j = JSON::encode($definition);
-      $m = "invalid filter definition: [$j]";
-      throw new \BadFunctionCallException($m, E_USER_WARNING);
-    }
-    return $result;
+  public static function index(array $subject, $key) : array {
+    return array_column($subject, null, $key);
   }
 
   /**
-   * computes the intersection of arrays.
-   *
-   * keys are preserved.
-   * values are compared strictly.
-   *
-   * @param array $subject  the subject array
-   * @param array …$arrays  array(s) to compare against
-   * @return array          an array containing subject values which are present in all arrays
-   */
-  public static function intersect(array $subject, array ...$arrays) : array {
-    foreach ($subject as $k => $v) {
-      foreach ($arrays as $array) {
-        if (! in_array($v, $array, true)) {
-          unset($subject[$k]);
-          continue 2;
-        }
-      }
-    }
-    return $subject;
-  }
-
-  /**
-   * determines whether an array is a list (has 0-based, sequential indexes).
+   * determines whether an array is a list (has 0-based, sequentially incrementing indexes).
    *
    * @param array $subject  the subject array
    * @return bool           true if subject is a list; false otherwise
@@ -203,24 +174,23 @@ class Arrays {
   }
 
   /**
-   * selects one or more items from an array at random and returns their key(s).
+   * selects one or more keys from an array at random.
    *
-   * this method uses a cryptographically secure random number generator.
+   * this method uses random_int().
    * use array_rand() unless you actually have need for cryptographic randomness.
    *
-   * @param array $subject       the subject array
-   * @param int   $number        the number of items to pick (must be a positive integer)
-   * @throws UnderflowException  when trying to pick more items than are in the array
-   * @return scalar|scalar[]     the selected key(s)
+   * @param array $subject    the subject array
+   * @param int   $number     the number of items to pick (must be a positive integer)
+   * @throws ArraysException  when trying to pick more items than are in the array
+   * @return scalar|scalar[]  the selected key(s)
    */
   public static function random(array $subject, int $number=1) {
-    if ($number < 1) {
-      throw new \InvalidArgumentException('$number must be positive integer');
-    }
-
     $count = count($subject);
-    if ($number > $count) {
-      throw new \UnderflowException("\$subject array contains fewer than {$number} items");
+    if ($number < 1 || $number > $count) {
+      throw new ArraysException(
+        ArraysException::INVALID_SAMPLE_SIZE,
+        ['min' => '1', 'max' => $count]
+      );
     }
 
     $keys = array_keys($subject);
@@ -230,7 +200,8 @@ class Arrays {
 
     $randoms = [];
     for ($i=0; $i<$number; $i++) {
-      $random = random_int(0, $count);
+      $count = count($keys);
+      $randoms[] = random_int(0, $count);
       $randoms[] = $keys[$random];
       unset($keys[$random]);
     }
@@ -242,7 +213,6 @@ class Arrays {
    *
    * the provided callback should return an integer or string key,
    * or null to exclude the item from the re-keyed array.
-   * any other return value will trigger an exception.
    *
    * @param array    $subject          the subject array
    * @param callable $callback         (string|int $k, mixed $v) : string|int|null
@@ -252,60 +222,12 @@ class Arrays {
   public static function rekey(array $subject, callable $callback) : array {
     $rekeyed = [];
     foreach ($subject as $k=>$v) {
-      try {
-        $r = $callback($k, $v);
-      } catch (\Throwable $e) {
-        $m = 'uncaught exception thrown from $callback';
-        throw new \BadFunctionCallException($m, E_WARNING, $e);
-      }
+      $r = $callback($k, $v);
       if ($r === null) {
         continue;
-      }
-      if (! (is_string($r) || is_int($r))) {
-        $t = Vars::type($r);
-        $m = "new key must be an integer or string; \$callback returned [{$t}]";
-        throw new \BadFunctionCallException($m, E_WARNING);
       }
       $rekeyed[$r] = $v;
     }
     return $rekeyed;
-  }
-
-  /**
-   * splices values into an array, preserving associative keys in replacement
-   * (in case of key collision, existing items are discarded).
-   *
-   * N.B., operates on subject array by reference.
-   *
-   * N.B., the complex behaviour of offset and length in array_splice() are NOT preserved;
-   * both arguments must be non-negative integers.
-   *
-   * @param array &$subject     the subject array
-   * @param int   $offset       starting offset
-   * @param int   $length       length of slice to remove (NULL = truncate)
-   * @param array $replacement  replacement value(s) with optional key(s)
-   */
-  public function splice(array &$subject, int $offset, int $length=null, array $replacement=[]) {
-    if ($offset < 0) {
-      $m = "\$offset must be a non-negative integer; [{$offset}] provided";
-      throw new \InvalidArgumentException($m, E_USER_WARNING);
-    }
-    if ($length < 0) {
-      $m = "\$length must be a non-negative integer; [{$length}] provided";
-      throw new \InvalidArgumentException($m, E_USER_WARNING);
-    }
-    $front = array_slice($subject, 0, $offset, true);
-    $back = ($length === null) ?
-      []:
-      array_slice($subject, ($offset + $length), null, true);
-    foreach ($replacement as $k => $v) {
-      if (is_string($k) && isset($front[$k])) {
-        unset($front[$k]);
-      }
-      if (is_string($k) && isset($back[$k])) {
-        unset($back[$k]);
-      }
-    }
-    $subject = array_merge($front, $replacement, $back);
   }
 }

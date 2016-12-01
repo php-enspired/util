@@ -1,7 +1,6 @@
 <?php
 /**
  * @package    at.util
- * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
  * @license    GPL-3.0 (only)
@@ -18,7 +17,10 @@
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 declare(strict_types = 1);
+
 namespace at\util;
+
+use at\util\VarsException;
 
 /**
  * general variable handling utilities.
@@ -33,12 +35,76 @@ class Vars {
    */
   public static function debug(...$expressions) {
     if (empty($expressions)) {
+      throw new VarsException(VarsException::NO_EXPRESSIONS);
       $m = 'at least one $expression must be provided';
       throw new \BadMethodCallException($m, E_USER_WARNING);
     }
     ob_start();
     var_dump(...$expressions);
     return ob_get_clean();
+  }
+
+  /**
+   * filters variables based on a callback map.
+   *
+   * {@see http://php.net/filter_var_array} for details about building filter definitions.
+   * in addition, allows "shorthand" filter definitions:
+   *  - if $definition is callable, it will be applied to the entire array using FILTER_CALLBACK.
+   *  - if a $definition value is NULL, that key will use FILTER_DEFAULT.
+   *  - if a $definition value is callable, that key will use FILTER_CALLBACK.
+   *  - if a $definition value is a Regex instance, that key will use FILTER_VALIDATE_REGEXP.
+   *
+   * callable filters use the following signature:
+   *  filter_callback(mixed $value) : mixed
+   *
+   * like filter_var_array, values can be arrays, but filter definitions cannot be nested.
+   * to validate an item with nested arrays,
+   * pass a callback function to the base key which contains the validation logic.
+   *
+   * @param array $vars                the variables to filter
+   * @param mixed $definition          filter definition
+   * @param bool  $add_empty           add missing items (as NULL) to the returned array
+   * @throws UnexpectedValueException  if a provided callback throws
+   * @throws BadFunctionCallException  if filter definition is invalid
+   * @return array                     the filtered variables
+   */
+  public static function filter(array $vars, $definition, $add_empty=true): array {
+    try {
+      if ($definition === null) {
+        $definition = FILTER_DEFAULT;
+      } elseif (is_callable($definition)) {
+        $definition = array_fill_keys(array_keys($vars), $definition);
+      }
+      if (is_array($definition)) {
+        foreach ($definition as &$i) {
+          if ($i === null) {
+            $i = FILTER_DEFAULT;
+          } elseif ($i instanceof Regex) {
+            $i = [
+              "filter"  => FILTER_VALIDATE_REGEXP,
+              "options" => ["regexp" => $i->__toString()]
+            ];
+          } elseif (is_callable($i)) {
+            $i = [
+              "filter"  => FILTER_CALLBACK,
+              "options" => $i
+            ];
+          }
+        }
+      }
+
+      $result = filter_var_array($vars, $definition, $add_empty);
+    } catch (\Throwable $e) {
+      $m = "uncaught exception thrown from filter: {$e->getMessage()}";
+      throw new \RuntimeException($m, $e->getCode(), $e);
+    }
+    if (! is_array($result)) {
+      throw new VarsException(
+        VarsException::INVALID_FILTER,
+        ['definition' => Json::encode($definition)]
+      );
+    }
+    return $result;
   }
 
   /**

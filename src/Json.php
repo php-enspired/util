@@ -1,7 +1,6 @@
 <?php
 /**
  * @package    at.util
- * @version    0.4
  * @author     Adrian <adrian@enspi.red>
  * @copyright  2014 - 2016
  * @license    GPL-3.0 (only)
@@ -18,12 +17,15 @@
  *  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 declare(strict_types = 1);
+
 namespace at\util;
+
+use at\util\JsonException;
 
 /**
  * wraps JSON functions with sensible defaults and error handling boilerplate.
  */
-class JSON {
+class Json {
 
   /**
    * @type bool DEFAULT_ASSOC           prefer decoding data as arrays.
@@ -35,17 +37,16 @@ class JSON {
    */
   const DEFAULT_ASSOC = true;
   const DEFAULT_DECODE_OPTIONS = JSON_BIGINT_AS_STRING;
-  const DEFAULT_ENCODE_OPTIONS = JSON_BIGINT_AS_STRING
-    | JSON_PRESERVE_ZERO_FRACTION
-    | JSON_UNESCAPED_SLASHES
-    | JSON_UNESCAPED_UNICODE;
+  const DEFAULT_ENCODE_OPTIONS = JSON_BIGINT_AS_STRING |
+    JSON_PRESERVE_ZERO_FRACTION |
+    JSON_UNESCAPED_SLASHES |
+    JSON_UNESCAPED_UNICODE;
   const DEFAULT_DEPTH = 512;
-  const HEX = JSON_HEX_QUOT
-    | JSON_HEX_TAG
-    | JSON_HEX_AMP
-    | JSON_HEX_APOS;
-  const PRETTY = self::DEFAULT_ENCODE_OPTIONS
-    | JSON_PRETTY_PRINT;
+  const HEX = JSON_HEX_QUOT |
+    JSON_HEX_TAG |
+    JSON_HEX_AMP |
+    JSON_HEX_APOS;
+  const PRETTY = self::DEFAULT_ENCODE_OPTIONS | JSON_PRETTY_PRINT;
 
   /**
    * wraps json_decode with preferred options and error handling boilerplate.
@@ -68,8 +69,11 @@ class JSON {
     Vars::typeHint($depth, 'int', '$opts[depth]');
 
     $value = json_decode($json, $assoc, $depth, $options);
-    self::_json_error_check();
-    return $value;
+    if (json_last_error === JSON_ERROR_NONE) {
+      return $value;
+    }
+
+    throw new JsonException(['json' => $json, 'opts' => $opts]);
   }
 
   /**
@@ -91,35 +95,28 @@ class JSON {
     Vars::typeHint($depth, 'int', '$opts[depth]');
 
     $json = json_encode($data, $options, $depth);
-    self::_json_error_check();
-    return $json;
+    if (json_last_error() === JSON_ERROR_NONE) {
+      return $json;
+    }
+
+    throw new JsonException(['data' => $data, 'opts' => $opts]);
   }
 
   /**
    * checks whether value is a valid json string.
    *
-   * @param mixed $value   the value to check
-   * @return bool          true if value is valid json; false otherwise
+   * @param mixed       $value   the value to check
+   * @param string|null &$error  filled with error message, if invalid; null otherwise
+   * @return bool                true if value is valid json; false otherwise
    */
-  public static function is_json($value) {
+  public static function is_valid($value, &$error = null) {
     try {
       self::decode($value);
+      $error = null;
       return true;
-    } catch (\RuntimeException $e) {
+    } catch (JsonException $e) {
+      $error = $e->getMessage();
       return false;
     }
-  }
-
-  /**
-   * checks for errors encountered during last json_* invocation.
-   *
-   * @throws RuntimeException  if the last json_* function invocation errored
-   */
-  private static function _json_error_check() {
-    $code = json_last_error();
-    if ($code === JSON_ERROR_NONE) {
-      return;
-    }
-    throw new \RuntimeException(json_last_error_msg(), $code);
   }
 }

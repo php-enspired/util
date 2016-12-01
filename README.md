@@ -1,6 +1,9 @@
-# at-7
-## Util
+util
+====
 
 Various PHP utility classes and interfaces/traits for general use.
 
-Requires php 7+
+dependencies
+------------
+
+Requires php 7.0 or later.

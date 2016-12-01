@@ -1,9 +1,9 @@
 {
-  "name": "at-7/util",
+  "name": "php-enspired/util",
   "description": "Utility classes and mixins.",
   "type": "library",
   "homepage": "http://php.enspi.red",
-  "license": "GPL-3.0 (no later licenses permitted)",
+  "license": "GPL-3.0 (only)",
   "authors": [
     {
       "name": "Adrian",
@@ -12,14 +12,10 @@
     }
   ],
   "support": {
-    "irc": "irc://irc.freenode.net/at-7"
+    "irc": "irc://irc.freenode.net/php-enspired"
   },
   "require": {
-    "php": "^7.0",
-    "php-ds/php-ds": "dev-master"
-  },
-  "suggest": {
-    "ext-ds": "php datastructures extension (replaces php-ds/php-ds)"
+    "php": "^7.0"
   },
   "require-dev": {},
   "autoload": {
