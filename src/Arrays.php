@@ -26,6 +26,62 @@ use at\util\ArraysException;
  * utility functions for arrays. */
 class Arrays {
 
+  /** @type callable[]  list of supported array_* functions. */
+  const ARRAY_FUNCTIONS = [
+    'array_change_key_case',
+    'array_chunk',
+    'array_column',
+    'array_combine',
+    'array_count_values',
+    'array_diff_assoc',
+    'array_diff_key',
+    'array_diff_uassoc',
+    'array_diff_ukey',
+    'array_diff',
+    'array_fill_keys',
+    'array_fill',
+    'array_filter',
+    'array_flip',
+    'array_intersect_assoc',
+    'array_intersect_key',
+    'array_intersect_uassoc',
+    'array_intersect_ukey',
+    'array_intersect',
+    'array_key_exists',
+    'array_keys',
+    'array_map',
+    'array_merge_recursive',
+    'array_merge',
+    'array_pad',
+    'array_product',
+    'array_rand',
+    'array_reduce',
+    'array_replace_recursive',
+    'array_replace',
+    'array_reverse',
+    'array_search',
+    'array_slice',
+    'array_splice',
+    'array_sum',
+    'array_udiff_assoc',
+    'array_udiff_uassoc',
+    'array_udiff',
+    'array_uintersect_assoc',
+    'array_uintersect_uassoc',
+    'array_uintersect',
+    'array_unique',
+    'array_values'
+  ];
+
+  /**
+   * keys for various method options.
+   *
+   * @type int OPT_DELIM  a user-specified delimiter
+   * @type int OPT_THROW  throw on failure?
+   */
+  const OPT_DELIM = 0;
+  const OPT_THROW = 1;
+
   /** @type callable[]  list of supported array sorting functions. */
   const SORT_FUNCTIONS = [
     'arsort',
@@ -44,21 +100,25 @@ class Arrays {
 
   /**
    * proxies native php array functions.
+   * @see self::ARRAY_FUNCTIONS and self::SORT_FUNCTIONS for supported functions.
+   * @see <http://php.net/__callStatic>
    *
-   * supports sorting functions (does not modify the input array) and all "array_*" functions.
-   * compact(), extract(), and pointer functions (e.g., current(), each()) are not supported.
    * the user is responsible for argument types/order.
    */
   public static function __callStatic($name, $arguments) {
     if (in_array($name, self::SORT_FUNCTIONS)) {
-      call_user_func_array($name, $arguments);
-      return $arguments[0];
+      // stupid by-reference arguments
+      $array = array_shift($arguments);
+      $name($array, ...$arguments);
+      return $array;
     }
 
-    if (! function_exists("array_{$name}")) {
-      throw new ArraysException(ArraysException::NO_SUCH_METHOD);
+    $array_name = "array_{$name}";
+    if (in_array($array_name, self::ARRAY_FUNCTIONS)) {
+      return $array_name(...$arguments);
     }
-    return call_user_func_array("array_{$name}", $arguments);
+
+    throw new ArraysException(ArraysException::NO_SUCH_METHOD, ['method' => $name]);
   }
 
   /**
@@ -105,13 +165,13 @@ class Arrays {
    */
   public static function dig(array $subject, string $path, array $opts=[]) {
     $opts = $opts + [
-      'delim' => '.',
-      'throw' => false
+      self::OPT_DELIM => '.',
+      self::OPT_THROW => false
     ];
 
-    foreach (explode($opts['delim'], $path) as $key) {
+    foreach (explode($opts[self::OPT_DELIM], $path) as $key) {
       if (! (is_array($subject) && isset($subject[$key]))) {
-        if ($opts['throw']) {
+        if ($opts[self::OPT_THROW]) {
           throw new ArraysException(ArraysException::INVALID_PATH, ['path' => $path]);
         }
         return null;
@@ -174,6 +234,15 @@ class Arrays {
   }
 
   /**
+   * lists php array functions that this class supports (proxies).
+   *
+   * @return callable[]  a list of php array function names
+   */
+  public static function list_array_methods() : array {
+    return array_merge(self::ARRAY_FUNCTIONS, self::SORT_FUNCTIONS);
+  }
+
+  /**
    * selects one or more keys from an array at random.
    *
    * this method uses random_int().
@@ -189,7 +258,7 @@ class Arrays {
     if ($number < 1 || $number > $count) {
       throw new ArraysException(
         ArraysException::INVALID_SAMPLE_SIZE,
-        ['min' => '1', 'max' => $count]
+        ['count' => $count, 'size' => $number]
       );
     }
 
@@ -201,7 +270,7 @@ class Arrays {
     $randoms = [];
     for ($i=0; $i<$number; $i++) {
       $count = count($keys);
-      $randoms[] = random_int(0, $count);
+      $random = random_int(0, $count);
       $randoms[] = $keys[$random];
       unset($keys[$random]);
     }

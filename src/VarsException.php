@@ -46,32 +46,27 @@ class VarsException extends RuntimeException implements Exceptable {
   /** @see exceptableTrait::INFO */
   const INFO = [
     self::NO_EXPRESSIONS => [
-      'message' => 'at least one $expression must be provided',
-      'severity' => E_WARNING
+      'message' => 'at least one $expression must be provided'
     ],
     self::INVALID_FILTER => [
       'message' => 'invalid filter definition',
       'severity' => E_WARNING,
-      'tr_message' => "invalid filter definition: {definition}",
-      'tr' => ['definition' => null]
+      'tr_message' => "invalid filter definition: {definition}"
     ],
     self::INVALID_CAST_TYPE => [
       'message' => 'invalid cast type',
       'severity' => E_WARNING,
-      'tr_message' => "\$type must be a valid php (pseudo)type; '{type}' provided",
-      'tr' => ['type' => null]
+      'tr_message' => "\$type must be a valid php (pseudo)type; '{type}' provided"
     ],
     self::UNCASTABLE => [
       'message' => 'uncastable value',
       'severity' => E_WARNING,
-      'tr_message' => "value of type '{value}' cannot be cast to {type}",
-      'tr' => ['type' => null, 'value' => null]
+      'tr_message' => "value of type '{value}' cannot be cast to {type}"
     ],
     self::INVALID_CAST_DEFAULT => [
       'message' => 'invalid cast default',
       'severity' => E_WARNING,
-      'tr_message' => "default value must be {type}; {default} provided",
-      'tr' => ['type' => null, 'default' => null]
+      'tr_message' => "default value must be {type}; {default} provided"
     ]
   ];
 }

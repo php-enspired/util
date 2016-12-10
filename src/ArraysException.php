@@ -22,7 +22,7 @@ namespace at\util;
 
 use RuntimeException;
 use at\exceptable\api\Exceptable,
-    at\execptable\exceptable as exceptableTrait;
+    at\exceptable\exceptable as exceptableTrait;
 
 /**
  * represents error cases in arrays methods.
@@ -46,26 +46,22 @@ class ArraysException extends RuntimeException implements Exceptable {
     self::NO_SUCH_METHOD => [
       'message' => 'no such method exists',
       'severity' => E_ERROR,
-      'tr_message' => 'no such method: Arrays::{method}()',
-      'tr' => ['method' => null]
+      'tr_message' => 'no such method: Arrays::{method}()'
     ],
     self::INVALID_CATEGORY_KEY => [
       'message' => 'invalid category key',
       'severity' => E_NOTICE,
-      'tr_message' => "invalid category key '{key}' (key must exist in all rows)",
-      'tr' => ['key' => null]
+      'tr_message' => "invalid category key '{key}' (key must exist in all rows)"
     ],
     self::INVALID_PATH => [
       'message' => 'invalid path',
       'severity' => E_NOTICE,
-      'tr_message' => 'path does not exist in subject array: {path}',
-      'tr' => ['path' => null]
+      'tr_message' => 'path does not exist in subject array: {path}'
     ],
     self::INVALID_SAMPLE_SIZE => [
       'message' => 'invalid sample size',
       'severity' => E_NOTICE,
-      'tr_message' => 'sample size must be between 1 and {count}; {size} provided',
-      'tr' => ['count' => 'subject array size', 'size' => null]
+      'tr_message' => 'sample size must be between 1 and {count}; {size} provided'
     ]
   ];
 }

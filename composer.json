@@ -15,7 +15,11 @@
     "irc": "irc://irc.freenode.net/php-enspired"
   },
   "require": {
-    "php": "^7.0"
+    "php": "^7.0",
+    "php-enspired/exceptable": "dev-master as 0.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^5.7"
   },
   "autoload": {
     "psr-4": {
