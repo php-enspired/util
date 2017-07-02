@@ -20,13 +20,18 @@ declare(strict_types = 1);
 
 namespace at\util;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use GMP;
-use at\util\VarsException;
+use Throwable;
+use TypeError;
+
+use at\util\VarToolsException;
 
 /**
  * general variable handling utilities.
  */
-class Vars {
+class VarTools {
 
   /**
    * php data types and psuedotypes.
@@ -67,12 +72,12 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if type, cast, or default is invalid
-   * @return mixed         the casted value on success; default value otherwise
+   * @throws VarToolsException  if type, cast, or default is invalid
+   * @return mixed              the casted value on success; default value otherwise
    */
   public static function cast($value, string $type, array $opts = []) {
     if (! method_exists([__CLASS__, "to_{$type}"])) {
-      throw new VarsException(VarsException::INVALID_CAST_TYPE);
+      throw new VarToolsException(VarToolsException::INVALID_CAST_TYPE);
     }
 
     return self::{"to_{$type}"}($value, $opts);
@@ -86,7 +91,7 @@ class Vars {
    */
   public static function debug(...$expressions) {
     if (empty($expressions)) {
-      throw new VarsException(VarsException::NO_EXPRESSIONS);
+      throw new VarToolsException(VarToolsException::NO_EXPRESSIONS);
       $m = 'at least one $expression must be provided';
       throw new \BadMethodCallException($m, E_USER_WARNING);
     }
@@ -112,12 +117,11 @@ class Vars {
    * to validate an item with nested arrays,
    * pass a callback function to the base key which contains the validation logic.
    *
-   * @param array $vars                the variables to filter
-   * @param mixed $definition          filter definition
-   * @param bool  $add_empty           add missing items (as NULL) to the returned array
-   * @throws UnexpectedValueException  if a provided callback throws
-   * @throws BadFunctionCallException  if filter definition is invalid
-   * @return array                     the filtered variables
+   * @param array $vars         the variables to filter
+   * @param mixed $definition   filter definition
+   * @param bool  $add_empty    add missing items (as NULL) to the returned array
+   * @throws VarToolsException  if a provided callback throws, or if filter definition is invalid
+   * @return array              the filtered variables
    */
   public static function filter(array $vars, $definition, $add_empty=true): array {
     try {
@@ -146,12 +150,11 @@ class Vars {
 
       $result = filter_var_array($vars, $definition, $add_empty);
     } catch (\Throwable $e) {
-      $m = "uncaught exception thrown from filter: {$e->getMessage()}";
-      throw new \RuntimeException($m, $e->getCode(), $e);
+      throw new VarToolsException(VarToolsException::BAD_CALL_RIPLEY, $e);
     }
     if (! is_array($result)) {
-      throw new VarsException(
-        VarsException::INVALID_FILTER,
+      throw new VarToolsException(
+        VarToolsException::INVALID_FILTER,
         ['definition' => Json::encode($definition)]
       );
     }
@@ -159,11 +162,24 @@ class Vars {
   }
 
   /**
+   * checks whether a variable can be coverted to DateTime.
+   *
+   * @param mixed $var  the variable to check
+   * @return bool       true if variable is DateTimeable; false otherwise
+   */
+  public static function is_DateTimeable($var) : bool {
+    try {
+      self::to_DateTime($var);
+      return true;
+    } catch (Throwable $e) {
+      return false;
+    }
+  }
+
+  /**
    * checks whether a variable is iterable.
    *
    * true for arrays and objects which implement Traversable.
-   *
-   * @todo deprecate when 7.1 is lowest supported version
    *
    * @param mixed $var  the variable to check
    * @return bool       true if variable is iterable; false otherwise
@@ -194,14 +210,14 @@ class Vars {
    * @param array  $opts {
    *    @type mixed $default|$0  default value if casting is not possible
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return array         the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return array              the casted value on success; default value otherwise
    */
   public static function to_array($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? [];
     if (! is_array($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::ARRAY, 'default' => self::type($default)]
       );
     }
@@ -227,20 +243,50 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return callable      the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return callable           the casted value on success; default value otherwise
    */
   public static function to_callable($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? function() use ($value) { return $value; };
     if (! is_callable($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::CALLABLE, 'default' => self::type($default)]
       );
     }
     $throw = (bool) ($opts['throw'] ?? $opts[1] ?? false);
 
     return is_callable($value) ? $value : $default;
+  }
+
+  /**
+   * casts a value to DateTime.
+   *
+   * @param mixed $value  the value to cast
+   * @param array  $opts {
+   *    @type mixed $default|$0  default value if casting is not possible
+   *    @type bool  $throw|$1    throw if casting is not possible?
+   *  }
+   * @throws VarToolsException  if cast or default is invalid
+   * @return DateTimeInterface  the casted value on success; default value otherwise
+   */
+  public static function to_DateTime($value, array $opts = []) : DateTimeInterface {
+    $default = $opts['default'] ?? $opts[0] ?? new DateTimeImmutable;
+    if (! $default instanceof DateTimeInterface) {
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
+        ['type' => DateTimeInterface::class, 'default' => self::type($default)]
+      );
+    }
+    $throw = (bool) ($opts['throw'] ?? $opts[1] ?? false);
+
+    try {
+      return ($value instanceof DateTimeInterface) ?
+        $value :
+        new DateTimeImmutable(is_int($value) ? "@{$value}" : $value);
+    } catch (Throwable $e) {
+      throw new VarToolsException(VarToolsException::INVALID_TIME_VALUE, ['value' => $value]);
+    }
   }
 
   /**
@@ -251,14 +297,14 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return float         the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return float              the casted value on success; default value otherwise
    */
   public static function to_float($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? 0.0;
     if (! is_float($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::FLOAT, 'default' => self::type($default)]
       );
     }
@@ -283,8 +329,8 @@ class Vars {
     }
 
     if ($throw) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
+      throw new VarToolsException(
+        VarToolsException::UNCASTABLE,
         ['type' => self::FLOAT, 'value' => self::type($value)]
       );
     }
@@ -299,14 +345,14 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return          the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return                    the casted value on success; default value otherwise
    */
   public static function to_integer($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? 0;
     if (! is_int($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::INTEGER, 'default' => self::type($default)]
       );
     }
@@ -331,8 +377,8 @@ class Vars {
     }
 
     if ($throw) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
+      throw new VarToolsException(
+        VarToolsException::UNCASTABLE,
         ['type' => self::INTEGER, 'value' => self::type($value)]
       );
     }
@@ -346,14 +392,14 @@ class Vars {
    * @param array  $opts {
    *    @type mixed $default|$0  default value if casting is not possible
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return iterable      the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return iterable           the casted value on success; default value otherwise
    */
   public static function to_iterable($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? [];
     if (! self::is_iterable($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::ITERABLE, 'default' => self::type($default)]
       );
     }
@@ -373,14 +419,14 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return jsonable      the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return jsonable           the casted value on success; default value otherwise
    */
   public static function to_jsonable($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? [];
     if (! self::is_jsonable($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::JSONABLE, 'default' => self::type($default)]
       );
     }
@@ -391,8 +437,8 @@ class Vars {
     }
 
     if ($throw) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
+      throw new VarToolsException(
+        VarToolsException::UNCASTABLE,
         ['type' => self::JSONABLE, 'value' => self::type($value)]
       );
     }
@@ -427,14 +473,14 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return resource      the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return resource           the casted value on success; default value otherwise
    */
   public static function to_resource($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? null;
     if (! is_resource($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::RESOURCE, 'default' => self::type($default)]
       );
     }
@@ -445,8 +491,8 @@ class Vars {
     }
 
     if ($throw) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
+      throw new VarToolsException(
+        VarToolsException::UNCASTABLE,
         ['type' => self::RESOURCE, 'value' => self::type($value)]
       );
     }
@@ -461,14 +507,14 @@ class Vars {
    *    @type mixed $default|$0  default value if casting is not possible
    *    @type bool  $throw|$1    throw if casting is not possible?
    *  }
-   * @throws VarException  if cast or default is invalid
-   * @return string        the casted value on success; default value otherwise
+   * @throws VarToolsException  if cast or default is invalid
+   * @return string             the casted value on success; default value otherwise
    */
   public static function to_string($value, array $opts = []) {
     $default = $opts['default'] ?? $opts[0] ?? '';
     if (! is_($default)) {
-      throw new VarsException(
-        VarsException::INVALID_CAST_DEFAULT,
+      throw new VarToolsException(
+        VarToolsException::INVALID_CAST_DEFAULT,
         ['type' => self::STRING, 'default' => self::type($default)]
       );
     }
@@ -490,8 +536,8 @@ class Vars {
     }
 
     if ($throw) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
+      throw new VarToolsException(
+        VarToolsException::UNCASTABLE,
         ['type' => self::STRING, 'value' => self::type($value)]
       );
     }
@@ -525,10 +571,10 @@ class Vars {
 
     foreach ($types as $type) {
       $match = ($argtype === $type) ||
-        ($arg instanceof $type) ||
         (($type === self::CALLABLE) && is_callable($arg)) ||
         (($type === self::ITERABLE) && self::is_iterable($arg)) ||
-        (($type === self::JSONABLE) && self::is_jsonable($arg));
+        (($type === self::JSONABLE) && self::is_jsonable($arg)) ||
+        ($arg instanceof $type);
       if ($match) {
         return true;
       }
@@ -549,10 +595,8 @@ class Vars {
     if (! self::typeCheck($arg, ...$types)) {
       $l = implode('|', $types);
       $t = self::type($arg);
-      $m = (count($types) === 1) ?
-        "{$name} must be {$l}; {$t} provided" :
-        "{$name} must be one of {$l}; {$t} provided";
-      throw new \TypeError($m, E_WARNING);
+      $m = "{$name} must be" . (count($types) > 1 ? 'one of ' : ' ') . "{$l}; {$t} provided";
+      throw new TypeError($m, E_WARNING);
     }
   }
 }

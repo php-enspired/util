@@ -20,15 +20,12 @@ declare(strict_types = 1);
 
 namespace at\util;
 
-use RuntimeException;
-use at\exceptable\api\Exceptable,
-    at\exceptable\exceptable as exceptableTrait;
+use at\exceptable\Exception as Exceptable;
 
 /**
  * represents error cases in arrays methods.
  */
-class ArraysException extends RuntimeException implements Exceptable {
-  use exceptableTrait;
+class ArraysException extends Exceptable {
 
   /**
    * @type int NO_SUCH_METHOD
@@ -41,7 +38,7 @@ class ArraysException extends RuntimeException implements Exceptable {
   const INVALID_PATH = (1<<2);
   const INVALID_SAMPLE_SIZE = (1<<3);
 
-  /** @see exceptableTrait::INFO */
+  /** @see Exceptable::INFO */
   const INFO = [
     self::NO_SUCH_METHOD => [
       'message' => 'no such method exists',
