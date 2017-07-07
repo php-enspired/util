@@ -8,7 +8,7 @@ dependencies
 
 Requires:
 
-* php 7.0 or later.
+* php 7.0 or later
 * Exceptable 1.1 or later (`composer require php-enspired/exceptable`)
 
 contributing or getting help
