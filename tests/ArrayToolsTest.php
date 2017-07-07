@@ -22,11 +22,11 @@ namespace at\util\tests;
 
 use stdClass,
     Throwable;
-use at\util\Arrays,
-    at\util\ArraysException;
+use at\util\ArrayTools,
+    at\util\ArrayToolsException;
 use PHPUnit\Framework\TestCase;
 
-class ArraysTest extends TestCase {
+class ArrayToolsTest extends TestCase {
 
   /**
    * various simple arrays for test cases.

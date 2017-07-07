@@ -35,6 +35,8 @@ use at\util\ {
  * note, any callable (closures, methods of other classes, built-in php functions, etc.),
  * so long as the follow this convention,
  * may be used in any context where a rule is expected.
+ *
+ * the dependency on at\PRO is "soft" (things work just fine if it doesn't exist).
  */
 class Validator {
 
@@ -457,13 +459,7 @@ class Validator {
     if (! is_string($value)) {
       return false;
     }
-
-    if ($regex instanceof PRO) {
-      return $regex->matches($value);
-    }
-
-    // using preg_match so as to keep the PRO dependency "soft"
-    return preg_match($regex, $value) === 1;
+    return ($regex instanceof PRO) ? $regex->matches($value) : preg_match($regex, $value) === 1;
   }
 
   /**
