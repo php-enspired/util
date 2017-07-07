@@ -23,9 +23,9 @@ namespace at\util;
 use at\exceptable\Exception as Exceptable;
 
 /**
- * represents error cases in arrays methods.
+ * error cases for arraytool methods.
  */
-class ArraysException extends Exceptable {
+class ArrayToolsException extends Exceptable {
 
   /**
    * @type int NO_SUCH_METHOD
@@ -33,27 +33,26 @@ class ArraysException extends Exceptable {
    * @type int INVALID_PATH
    * @type int INVALID_SAMPLE_SIZE
    */
-  const NO_SUCH_METHOD = 1;
-  const INVALID_CATEGORY_KEY = (1<<1);
-  const INVALID_PATH = (1<<2);
-  const INVALID_SAMPLE_SIZE = (1<<3);
+  const NO_SUCH_METHOD = 2;
+  const INVALID_CATEGORY_KEY = 3;
+  const INVALID_PATH = 4;
+  const INVALID_SAMPLE_SIZE = 5;
 
   /** @see Exceptable::INFO */
   const INFO = [
     self::NO_SUCH_METHOD => [
-      'message' => 'no such method exists',
-      'severity' => E_ERROR,
-      'tr_message' => 'no such method: Arrays::{method}()'
+      'message' => 'no such method',
+      'tr_message' => 'no method "ArrayTools::{method}()" exists'
     ],
     self::INVALID_CATEGORY_KEY => [
       'message' => 'invalid category key',
       'severity' => E_NOTICE,
-      'tr_message' => "invalid category key '{key}' (key must exist in all rows)"
+      'tr_message' => 'invalid category key: "{key}" does not exist in all rows'
     ],
     self::INVALID_PATH => [
       'message' => 'invalid path',
       'severity' => E_NOTICE,
-      'tr_message' => 'path does not exist in subject array: {path}'
+      'tr_message' => 'path "{path}" does not exist in subject array'
     ],
     self::INVALID_SAMPLE_SIZE => [
       'message' => 'invalid sample size',

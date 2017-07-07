@@ -57,7 +57,7 @@ class ArraysTest extends TestCase {
   ];
 
   /**
-   * @covers Arrays::__callStatic()
+   * @covers ArrayTools::__callStatic()
    * @dataProvider _arrayFunctionProvider
    */
   public function testArrayFunctions(string $name, array $args, $expected) {
@@ -65,16 +65,16 @@ class ArraysTest extends TestCase {
       $this->_setExceptionExpectations($expected);
     }
 
-    $actual = Arrays::{$name}(...$args);
+    $actual = ArrayTools::{$name}(...$args);
     $this->assertEquals($expected, $actual);
   }
 
   /**
-   * @covers Arrays::categorize()
+   * @covers ArrayTools::categorize()
    */
   public function testCategorize() {
     // success case
-    $categorized = Arrays::categorize($this->_nestedArrayA, 'a');
+    $categorized = ArrayTools::categorize($this->_nestedArrayA, 'a');
     $expectedKeys = array_column($this->_nestedArrayA, 'a');
     $this->assertEquals($expectedKeys, array_keys($categorized));
     foreach ($expectedKeys as $i => $key) {
@@ -85,23 +85,23 @@ class ArraysTest extends TestCase {
     $this->_setExceptionExpectations(
       new ArraysException(ArraysException::INVALID_CATEGORY_KEY), ['key' => 'x']
     );
-    Arrays::categorize($this->_nestedArrayA, 'x');
+    ArrayTools::categorize($this->_nestedArrayA, 'x');
   }
 
   /**
-   * @covers Arrays::contains()
+   * @covers ArrayTools::contains()
    * @dataProvider _containsProvider
    */
   public function testContains(array $subject, $value, $expected) {
     if ($expected) {
-      $this->assertTrue(Arrays::contains($subject, $value));
+      $this->assertTrue(ArrayTools::contains($subject, $value));
       return;
     }
-    $this->assertFalse(Arrays::contains($subject, $value));
+    $this->assertFalse(ArrayTools::contains($subject, $value));
   }
 
   /**
-   * @covers Arrays::dig()
+   * @covers ArrayTools::dig()
    * @dataProvider _digProvider
    */
   public function testDig(array $subject, string $path, array $opts, $expected) {
@@ -109,44 +109,44 @@ class ArraysTest extends TestCase {
       $this->_setExceptionExpectations($expected);
     }
 
-    $actual = Arrays::dig($subject, $path, $opts);
+    $actual = ArrayTools::dig($subject, $path, $opts);
     $this->assertEquals($expected, $actual);
   }
 
   /**
-   * @covers Arrays::extend_recursive()
+   * @covers ArrayTools::extend()
    * @dataProvider _extendRecursiveProvider
    */
   public function testExtendRecursive(array $arrays, array $expected) {
-    $this->assertEquals($expected, Arrays::extend_recursive(...$arrays));
+    $this->assertEquals($expected, ArrayTools::extend(...$arrays));
   }
 
   /**
-   * @covers Arrays::index()
+   * @covers ArrayTools::index()
    */
   public function testIndex() {
     $this->assertEquals(
       array_column($this->_nestedArrayA, null, 'a'),
-      Arrays::index($this->_nestedArrayA, 'a')
+      ArrayTools::index($this->_nestedArrayA, 'a')
     );
   }
 
   /**
-   * @covers Arrays::is_list()
+   * @covers ArrayTools::isList()
    */
   public function testIsList() {
     // lists
-    $this->assertTrue(Arrays::is_list([1, 2, 3]));
-    $this->assertTrue(Arrays::is_list([0 => 1, 1 => 2, 2 => 3]));
+    $this->assertTrue(ArrayTools::isList([1, 2, 3]));
+    $this->assertTrue(ArrayTools::isList([0 => 1, 1 => 2, 2 => 3]));
 
     // not lists
-    $this->assertFalse(Arrays::is_list([1 => 1, 2 => 2, 3 => 3]));
-    $this->assertFalse(Arrays::is_list(['a' => 1, 'b' => 2, 'c' => 3]));
-    $this->assertFalse(Arrays::is_list([1, 2, 3, 'a' => 4]));
+    $this->assertFalse(ArrayTools::isList([1 => 1, 2 => 2, 3 => 3]));
+    $this->assertFalse(ArrayTools::isList(['a' => 1, 'b' => 2, 'c' => 3]));
+    $this->assertFalse(ArrayTools::isList([1, 2, 3, 'a' => 4]));
   }
 
   /**
-   * @covers Arrays::random()
+   * @covers ArrayTools::random()
    * @dataProvider _randomProvider
    */
   public function testRandom(array $subject, int $num, Throwable $expected = null) {
@@ -154,7 +154,7 @@ class ArraysTest extends TestCase {
       $this->_setExceptionExpectations($expected);
     }
 
-    $random = Arrays::random($subject, $num);
+    $random = ArrayTools::random($subject, $num);
     if ($num === 1) {
       $this->assertTrue(is_string($random) || is_int($random));
       $this->assertArrayHasKey($random, $this->_simpleArrayA);
@@ -168,10 +168,10 @@ class ArraysTest extends TestCase {
   }
 
   /**
-   * @covers Arrays::rekey()
+   * @covers ArrayTools::rekey()
    */
   public function testRekey() {
-    $rekeyed = Arrays::rekey(
+    $rekeyed = ArrayTools::rekey(
       $this->_simpleArrayA + ['x' => 'X'],
       function ($k, $v) {
         return in_array($v, $this->_simpleArrayA) ? "{$k}:{$v}" : null;
@@ -342,12 +342,12 @@ class ArraysTest extends TestCase {
       [$subject, 'a.b', [], ['c' => 'foo']],
       [$subject, 'a.b.c', [], 'foo'],
       [$subject, 'a/b/c', [], null],
-      [$subject, 'a/b/c', [Arrays::OPT_DELIM => '/'], 'foo'],
+      [$subject, 'a/b/c', [ArrayTools::OPT_DELIM => '/'], 'foo'],
       [$subject, 'a.c', [], null],
       [
         $subject,
         'a.c',
-        [Arrays::OPT_THROW => true],
+        [ArrayTools::OPT_THROW => true],
         new ArraysException(ArraysException::INVALID_PATH, ['path' => 'a.c'])
       ]
     ];

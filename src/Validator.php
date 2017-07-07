@@ -27,18 +27,26 @@ use at\util\ {
 };
 
 /**
- * common/convenient validator functions. */
+ * common/convenient validator functions.
+ *
+ * all rules (validator functions) *must* take the value to test as their first argument.
+ * additional arguments may follow.
+ *
+ * note, any callable (closures, methods of other classes, built-in php functions, etc.),
+ * so long as the follow this convention,
+ * may be used in any context where a rule is expected.
+ */
 class Validator {
 
   /**
    * flags for invoking rulesets.
    *
-   * @type int RULESET_RETURN_ON_FAILURE  stop testing early if a rule fails.
-   * @type int RULESET_RETURN_ON_PASS     stop testing early if a rule passes.
-   * @type int RULESET_TEST_ALL           invoke all tests.
+   * @type int RULESET_RETURN_ON_FAILURE  stop invoking rules early if one fails.
+   * @type int RULESET_RETURN_ON_PASS     stop invoking rules early if one passes.
+   * @type int RULESET_TEST_ALL           invoke all rules.
    */
   const RULESET_RETURN_ON_FAILURE = 1;
-  const RULESET_RETURN_ON_PASS = 2;
+  const RULESET_RETURN_ON_PASS = (1<<1);
   const RULESET_TEST_ALL = 0;
 
   # callable aliases
@@ -50,9 +58,10 @@ class Validator {
    * @type callable ANY       passes if any rule passes.
    * @type callable AT_LEAST  passes if at least N rules pass.
    * @type callable AT_MOST   passes if at most N rules pass.
+   * @type callable EXACTLY   passes if exactly N rules pass.
    * @type callable IF        passes if the first rule fails, or if all other rules pass.
-   * @type callable NONE      passes if all rules fail.
-   * @type callable ONE       passes if only one rule passes.
+   * @type callable NONE      EXACTLY zero.
+   * @type callable ONE       EXACTLY one.
    * @type callable UNLESS    passes if the first rule passes, or if all other rules pass.
    */
   const ALL = [self::class, 'all'];
@@ -80,6 +89,7 @@ class Validator {
    * @type callable LESS     passes if value < test value.
    * @type callable MATCHES  passes if value matches given regular expression.
    * @type callable NEVER    always fails.
+   * @type callable SIZE     same as FROM, but checks byte length when given a string value.
    */
   const AFTER = [self::class, 'after'];
   const ALWAYS = [self::class, 'always'];
@@ -94,27 +104,36 @@ class Validator {
   const LESS = [self::class, 'less'];
   const MATCHES = [self::class, 'matches'];
   const NEVER = [self::class, 'never'];
+  const SIZE = [self::class, 'size'];
 
   /**
    * negations (same as rules above, but negated; replace "passes if" with "fails if")
    *
-   * @type callable NOT_BETWEEN
-   * @type callable NOT_EQUALS
-   * @type callable NOT_FROM
-   * @type callable NOT_GREATER
-   * @type callable NOT_IN
-   * @type callable NOT_LESS
-   * @type callable NOT_MATCHES
-   * @type callable NOT_TYPE
+   * @type callable AFTER    same as NOT_GREATER, but treats value as a timestring.
+   * @type callable BEFORE   same as NOT_LESS, but treats value as a timestring.
+   * @type callable BETWEEN  fails if min < value < max.
+   * @type callable DURING   same as NOT_FROM, but treats value as a timestring.
+   * @type callable EQUALS   fails if value is equal to test value.
+   * @type callable FROM     fails if min <= value <= max.
+   * @type callable GREATER  fails if value > test value.
+   * @type callable IN       fails if value is one of given values.
+   * @type callable IS_TYPE  fails if value is of given class, type, or pseudotype.
+   * @type callable LESS     fails if value < test value.
+   * @type callable MATCHES  fails if value matches given regular expression.
+   * @type callable SIZE     same as NOT_FROM, but checks byte length when given a string value.
    */
+  const NOT_AFTER = [self::class, 'notAfter'];
+  const NOT_BEFORE = [self::class, 'notBefore'];
   const NOT_BETWEEN = [self::class, 'notBetween'];
+  const NOT_DURING = [self::class, 'notDuring'];
   const NOT_EQUALS = [self::class, 'notEquals'];
   const NOT_FROM = [self::class, 'notFrom'];
   const NOT_GREATER = [self::class, 'notGreater'];
-  const NOT_IN = [self::class, 'notIn'];
+  const NOT_IN = [ArrayTools::class, 'notContains'];
+  const NOT_IS_TYPE = [VarTools::class, 'notTypeCheck'];
   const NOT_LESS = [self::class, 'notLess'];
   const NOT_MATCHES = [self::class, 'notMatches'];
-  const NOT_TYPE = [self::class, 'type'];
+  const NOT_SIZE = [self::class, 'notSize'];
 
   /**
    * handles negations of other rules.
@@ -173,7 +192,7 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function all(array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, $rules) === count($rules);
+    return self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
   }
 
   /**
@@ -196,7 +215,7 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function any(array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_RETURN_ON_PASS, $rules) > 0;
+    return self::_invokeRuleset(self::RULESET_RETURN_ON_PASS, ...$rules) > 0;
   }
 
   /**
@@ -211,7 +230,7 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function atLeast(int $least, array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_TEST_ALL, $rules) >= $least;
+    return self::_invokeRuleset(self::RULESET_TEST_ALL, ...$rules) >= $least;
   }
 
   /**
@@ -226,7 +245,7 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function atMost(int $most, array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_TEST_ALL, $rules) <= $most;
+    return self::_invokeRuleset(self::RULESET_TEST_ALL, ...$rules) <= $most;
   }
 
   /**
@@ -327,6 +346,21 @@ class Validator {
   }
 
   /**
+   * passes if exactly N rules pass.
+   *
+   * @param int   $exactly  number of tests which must pass
+   * @param array ...$rules {
+   *    @type callable $0    rule to invoke
+   *    @type mixed    $...  arguments
+   *  }
+   * @throws ValidatorException  if invoking a rule fails
+   * @return bool                true if validation succeeds; false otherwise
+   */
+  public static function exactly(int $exactly, array ...$rules) : bool {
+    return self::_invokeRuleset(self::RULESET_INVOKE_ALL, ...$rules) === $exactly;
+  }
+
+  /**
    * passes if min <= value <= max.
    *
    * @param mixed            $value  the value to test
@@ -387,7 +421,7 @@ class Validator {
    */
   public static function if(array ...$rules) : bool {
     return self::_invokeRuleset(self::RULESET_TEST_ALL, array_shift($rules)) === 0 ||
-      self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, $rules) === count($rules);
+      self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
   }
 
   /**
@@ -482,7 +516,23 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function one(array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_TEST_ALL, $rules) === 1;
+    return self::exactly(1, ...$rules);
+  }
+
+  /**
+   * same as FROM, but checks byte length when given a string value.
+   *
+   * @param mixed            $value  the value to test
+   * @param int|float|string $min    minimum value
+   * @param int|float|string $min    minimum value
+   * @return bool                    true if validation succeeds; false otherwise
+   */
+  public static function size($value, int $min, int $max) : bool {
+    if (is_string($value)) {
+      $value = strlen($value);
+    }
+
+    return self::from($value, $min, $max);
   }
 
   /**
@@ -497,7 +547,7 @@ class Validator {
    */
   public static function unless(array ...$rules) : bool {
     return self::_invokeRuleset(self::RULESET_TEST_ALL, array_shift($rules)) === 1 ||
-      self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, $rules) === count($rules);
+      self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
   }
 
   /**
