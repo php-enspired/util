@@ -31,31 +31,83 @@ use PHPUnit\Framework\TestCase;
 class ValidatorTest extends TestCase {
 
   /**
-   * mock rules.
-   *
-   * @type callable $_pass  rule which always passes.
-   * @type callable $_fail  rule which always fails.
+   * @covers Validator::all
+   * @dataProvider _rulesetProvider
    */
-  protected $_pass;
-  protected $_fail;
-
-  /**
-   * {@inheritDoc}
-   * @see https://phpunit.de/manual/current/en/fixtures.html
-   */
-  public function setUpBeforeClass() {
-    $this->_pass = function () { return true; };
-    $this->_fail = function () { return false; };
+  public function testAll (array $ruleset, int $expected) {
+    $this->assertEquals(Validator::all(...$ruleset), $expected === count($ruleset));
   }
 
-  public function testAll () {}
-  public function testAny () {}
-  public function testAtLeast () {}
-  public function testAtMost () {}
-  public function testIf () {}
-  public function testNone () {}
-  public function testOne () {}
-  public function testUnless () {}
+
+  /**
+   * @covers Validator::any
+   * @dataProvider _rulesetProvider
+   */
+  public function testAny (array $ruleset, int $expected) {
+    $this->assertEquals(Validator::any(...$ruleset), $expected > 0);
+  }
+
+  /**
+   * @covers Validator::atLeast
+   * @dataProvider _rulesetProvider
+   */
+  public function testAtLeast (array $ruleset, int $expected) {
+    foreach ([0, 1, 2, 3, 4, 5] as $min) {
+      $this->assertEquals(Validator::atLeast($min, ...$ruleset), $expected >= $min);
+    }
+  }
+
+  /**
+   * @covers Validator::atMost
+   * @dataProvider _rulesetProvider
+   */
+  public function testAtMost (array $ruleset, int $expected) {
+    foreach ([0, 1, 2, 3, 4, 5] as $max) {
+      $this->assertEquals(Validator::atMost($max, ...$ruleset), $expected <= $max);
+    }
+  }
+
+  /**
+   * @covers Validator::if
+   * @dataProvider _rulesetProvider
+   */
+  public function testIf (array $ruleset, int $expected) {
+    $pass = [function () { return true; }];
+    $fail = [function () { return false; }];
+    $count = count($ruleset);
+
+    $this->assertTrue(Validator::if($fail, ...$ruleset));
+    $this->assertEquals(Validator::if($pass, ...$ruleset), $expected === $count);
+  }
+
+  /**
+   * @covers Validator::none
+   * @dataProvider _rulesetProvider
+   */
+  public function testNone (array $ruleset, int $expected) {
+    $this->assertEquals(Validator::none(...$ruleset), $expected === 0);
+  }
+
+  /**
+   * @covers Validator::one
+   * @dataProvider _rulesetProvider
+   */
+  public function testOne (array $ruleset, int $expected) {
+    $this->assertEquals(Validator::one(...$ruleset), $expected === 1);
+  }
+
+  /**
+   * @covers Validator::unless
+   * @dataProvider _rulesetProvider
+   */
+  public function testUnless (array $ruleset, int $expected) {
+    $pass = [function () { return true; }];
+    $fail = [function () { return false; }];
+    $count = count($ruleset);
+
+    $this->assertTrue(Validator::unless($pass, ...$ruleset));
+    $this->assertEquals(Validator::unless($fail, ...$ruleset), $expected === $count);
+  }
 
   public function testAfter () {}
   public function testAlways () {}
@@ -72,8 +124,29 @@ class ValidatorTest extends TestCase {
   public function testNever () {}
   public function testSize () {}
 
-  protected function rulesetProvider() : array {
-    $pass = $this->_pass;
-    $fail = $this->_fail;
+  /**
+   * @return array[] {
+   *    @type callable[] $0  the ruleset to test
+   *    @type int        $1  the number of rules in the set that should pass
+   *  }
+   */
+  public function _rulesetProvider() : array {
+    $pass = [function () { return true; }];
+    $fail = [function () { return false; }];
+
+    return [
+      [[$fail, $fail, $fail, $fail], 0],
+      [[$fail, $fail, $fail, $pass], 1],
+      [[$fail, $fail, $pass, $fail], 1],
+      [[$fail, $pass, $fail, $fail], 1],
+      [[$pass, $fail, $fail, $fail], 1],
+      [[$fail, $fail, $pass, $pass], 2],
+      [[$fail, $pass, $pass, $fail], 2],
+      [[$pass, $pass, $fail, $fail], 2],
+      [[$fail, $pass, $pass, $pass], 3],
+      [[$pass, $pass, $pass, $fail], 3],
+      [[$pass, $fail, $pass, $pass], 3],
+      [[$pass, $pass, $pass, $pass], 4]
+    ];
   }
 }

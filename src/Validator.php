@@ -359,7 +359,7 @@ class Validator {
    * @return bool                true if validation succeeds; false otherwise
    */
   public static function exactly(int $exactly, array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_INVOKE_ALL, ...$rules) === $exactly;
+    return self::_invokeRuleset(self::RULESET_TEST_ALL, ...$rules) === $exactly;
   }
 
   /**

@@ -83,7 +83,7 @@ class ArrayToolsTest extends TestCase {
 
     // failure case (bad key)
     $this->_setExceptionExpectations(
-      new ArraysException(ArraysException::INVALID_CATEGORY_KEY), ['key' => 'x']
+      new ArrayToolsException(ArrayToolsException::INVALID_CATEGORY_KEY), ['key' => 'x']
     );
     ArrayTools::categorize($this->_nestedArrayA, 'x');
   }
@@ -306,7 +306,7 @@ class ArrayToolsTest extends TestCase {
     $tests['invalid'] = [
       'foo',
       [$simpleA],
-      new ArraysException(ArraysException::NO_SUCH_METHOD, ['method' => 'foo'])
+      new ArrayToolsException(ArrayToolsException::NO_SUCH_METHOD, ['method' => 'foo'])
     ];
 
     return $tests;
@@ -348,7 +348,7 @@ class ArrayToolsTest extends TestCase {
         $subject,
         'a.c',
         [ArrayTools::OPT_THROW => true],
-        new ArraysException(ArraysException::INVALID_PATH, ['path' => 'a.c'])
+        new ArrayToolsException(ArrayToolsException::INVALID_PATH, ['path' => 'a.c'])
       ]
     ];
   }
@@ -421,23 +421,23 @@ class ArrayToolsTest extends TestCase {
   public function _randomProvider() : array {
     $subject = $this->_simpleArrayA;
     $count = count($subject);
-    $exception = new ArraysException(ArraysException::INVALID_SAMPLE_SIZE, ['max' => $count]);
+    $exception = new ArrayToolsException(ArrayToolsException::INVALID_SAMPLE_SIZE, ['max' => $count]);
     return [
       [$subject, 1, null],
       [$subject, 2, null],
       [
         $subject,
         0,
-        new ArraysException(
-          ArraysException::INVALID_SAMPLE_SIZE,
+        new ArrayToolsException(
+          ArrayToolsException::INVALID_SAMPLE_SIZE,
           ['count' => $count, 'size' => 0]
         )
       ],
       [
         $subject,
         $count + 1,
-        new ArraysException(
-          ArraysException::INVALID_SAMPLE_SIZE,
+        new ArrayToolsException(
+          ArrayToolsException::INVALID_SAMPLE_SIZE,
           ['count' => $count, 'size' => $count + 1]
         )
       ]
