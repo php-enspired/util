@@ -281,10 +281,15 @@ class VarTools {
     $throw = (bool) ($opts['throw'] ?? $opts[1] ?? false);
 
     try {
-      return ($value instanceof DateTimeInterface) ?
-        $value :
-        new DateTimeImmutable(is_int($value) ? "@{$value}" : $value);
+      if (! $value instanceof DateTimeInterface) {
+        $unixtime = filter_var($value, FILTER_VALIDATE_INT);
+        $value = new DateTimeImmutable(is_int($unixtime) ? "@{$unixtime}" : $value);
+      }
+      return $value;
     } catch (Throwable $e) {
+      if (! $throw) {
+        return $default;
+      }
       throw new VarToolsException(VarToolsException::INVALID_TIME_VALUE, ['value' => $value]);
     }
   }
@@ -595,7 +600,7 @@ class VarTools {
     if (! self::typeCheck($arg, ...$types)) {
       $l = implode('|', $types);
       $t = self::type($arg);
-      $m = "{$name} must be" . (count($types) > 1 ? 'one of ' : ' ') . "{$l}; {$t} provided";
+      $m = "{$name} must be" . (count($types) > 1 ? ' one of ' : ' ') . "{$l}; {$t} provided";
       throw new TypeError($m, E_WARNING);
     }
   }

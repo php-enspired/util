@@ -48,7 +48,8 @@ class ValidatorException extends Exceptable {
     ],
     self::INVALID_TIME_VALUE => [
       'message' => 'invalid time value',
-      'tr_message' => 'invalid time value: {__rootMessage__}'
+      'severity' => Exceptable::WARNING,
+      'tr_message' => '{__rootMessage__}'
     ]
   ];
 }

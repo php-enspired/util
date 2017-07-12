@@ -20,6 +20,9 @@ declare(strict_types = 1);
 
 namespace at\util;
 
+use DateTimeImmutable,
+    DateTimeInterface;
+
 use at\PRO\PRO;
 use at\util\ {
   ValidatorException,

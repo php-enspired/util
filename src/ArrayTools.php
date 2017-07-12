@@ -186,21 +186,21 @@ class ArrayTools {
    * the user is responsible for argument types/order.
    *
    * @param string $name          function name to proxy
-   * @param array  $subject       the subject array
    * @param mixed  ...$arguments  function arguments
    * @throws ArrayToolsException  if the method is not supported
    * @return mixed                subject array if the native function takes it by reference;
    *                              native return value of the function otherwise
    */
-  public static function call(string $name, array $subject, ...$arguments) {
+  public static function call(string $name, ...$arguments) {
     $array_name = "array_{$name}";
 
     foreach ([$name, $array_name] as $function) {
       if (in_array($function, self::ARRAY_FUNCTIONS)) {
-        return $function($subject, ...$arguments);
+        return $function(...$arguments);
       }
 
       if (in_array($function, self::ARRAY_REF_FUNCTIONS)) {
+        $subject = array_shift($arguments);
         $function($subject, ...$arguments);
         return $subject;
       }
@@ -346,7 +346,7 @@ class ArrayTools {
 
     $randoms = [];
     for ($i=0; $i<$number; $i++) {
-      $random = random_int(0, count($keys));
+      $random = random_int(0, count($keys) - 1);
       $randoms[] = $keys[$random];
       unset($keys[$random]);
       $keys = array_values($keys);

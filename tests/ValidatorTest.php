@@ -20,9 +20,12 @@ declare(strict_types = 1);
 
 namespace at\util\tests;
 
-use Throwable;
-use at\util\Validator,
-    at\util\ValidatorException;
+use Throwable,
+    DateTimeImmutable;
+use at\util\ {
+  Validator,
+  ValidatorException
+};
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -109,11 +112,38 @@ class ValidatorTest extends TestCase {
     $this->assertEquals(Validator::unless($fail, ...$ruleset), $expected === $count);
   }
 
-  public function testAfter () {}
+  /**
+   * @covers Validator::after
+   * @dataProvider _datetimeableProvider
+   */
+  public function testAfter (array $times, int $expected) {
+    list($subject, $compare) = $times;
+    $this->assertEquals(Validator::after($subject, $compare), $expected > 0);
+  }
+
   public function testAlways () {}
-  public function testBefore () {}
+
+  /**
+   * @covers Validator::after
+   * @dataProvider _datetimeableProvider
+   */
+  public function testBefore (array $times, int $expected) {
+    list($subject, $compare) = $times;
+    $this->assertEquals(Validator::before($subject, $compare), $expected < 0);
+  }
   public function testBetween () {}
-  public function testDuring () {}
+
+  /**
+   * @covers Validator::after
+   * @dataProvider _datetimeableProvider
+   */
+  public function testDuring (array $times, int $expected) {
+    list($subject, $start, $end) = $times;
+    $this->assertEquals(
+      Validator::during($subject, $start, $end),
+      ($expected === 0) || ($expected === 1)
+    );
+  }
   public function testEquals () {}
   public function testFrom () {}
   public function testGreater () {}
@@ -136,17 +166,75 @@ class ValidatorTest extends TestCase {
 
     return [
       [[$fail, $fail, $fail, $fail], 0],
+
       [[$fail, $fail, $fail, $pass], 1],
       [[$fail, $fail, $pass, $fail], 1],
       [[$fail, $pass, $fail, $fail], 1],
       [[$pass, $fail, $fail, $fail], 1],
+
       [[$fail, $fail, $pass, $pass], 2],
-      [[$fail, $pass, $pass, $fail], 2],
+      [[$pass, $fail, $fail, $pass], 2],
       [[$pass, $pass, $fail, $fail], 2],
+      [[$fail, $pass, $pass, $fail], 2],
+
       [[$fail, $pass, $pass, $pass], 3],
-      [[$pass, $pass, $pass, $fail], 3],
       [[$pass, $fail, $pass, $pass], 3],
+      [[$pass, $pass, $fail, $pass], 3],
+      [[$pass, $pass, $pass, $fail], 3],
+
       [[$pass, $pass, $pass, $pass], 4]
+    ];
+  }
+
+  const COMPARE_LS_MIN = -1;
+  const COMPARE_EQ_MIN = 0;
+  const COMPARE_GR_MIN = 1;
+  const COMPARE_GR_MAX = 2;
+
+  /**
+   * @return array[] {
+   *    @type string|int|DateTimeInterface[] $0  time values: [0] subject, [1] min, and [2] max
+   *    @type int                            $1  indicates how values are expected to compare:
+   *                                             -1 if $0[0] < $0[1]
+   *                                              0 if $0[0] = $0[1]
+   *                                              1 if $0[0] > $0[1]
+   *                                              2 if $0[0] > $0[2]
+   *  }
+   */
+  public function _datetimeableProvider() : array {
+    $min = 'yesterday';
+    $mid = 'today';
+    $max = 'tomorrow';
+
+    $minDT = new DateTimeImmutable($min);
+    $midDT = new DateTimeImmutable($mid);
+    $maxDT = new DateTimeImmutable($max);
+
+    return [
+      [[$min, $mid, $max], -1],
+      [[$min, $min, $max], 0],
+      [[$mid, $min, $max], 1],
+      [[$max, $min, $mid], 2],
+
+      [[$minDT, $midDT, $maxDT], -1],
+      [[$minDT, $minDT, $maxDT], 0],
+      [[$midDT, $minDT, $maxDT], 1],
+      [[$maxDT, $minDT, $midDT], 2],
+
+      [[$minDT->format('U'), $midDT->format('U'), $maxDT->format('U')], -1],
+      [[$minDT->format('U'), $minDT->format('U'), $maxDT->format('U')], 0],
+      [[$midDT->format('U'), $minDT->format('U'), $maxDT->format('U')], 1],
+      [[$maxDT->format('U'), $minDT->format('U'), $midDT->format('U')], 2],
+
+      [[$minDT->format('r'), $midDT->format('r'), $maxDT->format('r')], -1],
+      [[$minDT->format('r'), $minDT->format('r'), $maxDT->format('r')], 0],
+      [[$midDT->format('r'), $minDT->format('r'), $maxDT->format('r')], 1],
+      [[$maxDT->format('r'), $minDT->format('r'), $midDT->format('r')], 2],
+
+      [[$min, $midDT, $maxDT->format('U')], -1],
+      [[$minDT, $minDT->format('U'), $maxDT->format('r')], 0],
+      [[$midDT->format('U'), $minDT->format('r'), $max], 1],
+      [[$maxDT->format('r'), $min, $midDT->format('U')], 2]
     ];
   }
 }
