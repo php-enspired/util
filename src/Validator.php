@@ -57,7 +57,7 @@ class Validator {
   # callable aliases
 
   /**
-   * "ruleset" rules (conditional structures for other rules)
+   * "ruleset" rules (conditional structures for other rules).
    *
    * @type callable ALL       passes if all rules pass.
    * @type callable ANY       passes if any rule passes.
@@ -79,53 +79,59 @@ class Validator {
   const UNLESS = [self::class, 'unless'];
 
   /**
-   * individual rules (validators for specific values)
+   * individual rules (validators for specific values).
    *
-   * @type callable AFTER    same as GREATER, but treats value as a timestring.
-   * @type callable ALWAYS   always passes.
-   * @type callable BEFORE   same as LESS, but treats value as a timestring.
-   * @type callable BETWEEN  passes if min < value < max.
-   * @type callable DURING   same as FROM, but treats value as a timestring.
-   * @type callable EQUALS   passes if value is equal to test value.
-   * @type callable FROM     passes if min <= value <= max.
-   * @type callable GREATER  passes if value > test value.
-   * @type callable IN       passes if value is one of given values.
-   * @type callable IS_TYPE  passes if value is of given class, type, or pseudotype.
-   * @type callable LESS     passes if value < test value.
-   * @type callable MATCHES  passes if value matches given regular expression.
-   * @type callable NEVER    always fails.
-   * @type callable SIZE     same as FROM, but checks byte length when given a string value.
+   * @type callable AFTER       same as GREATER, but treats value as a timestring.
+   * @type callable ALWAYS      always passes.
+   * @type callable BEFORE      same as LESS, but treats value as a timestring.
+   * @type callable BETWEEN     passes if min < value < max.
+   * @type callable BYTELENGTH  same as NOT_FROM, but checks byte length of a string value.
+   * @type callable DOMAIN      passes if value is a well-formed dotted domain name.
+   * @type callable DURING      same as FROM, but treats value as a timestring.
+   * @type callable EMAIL       passes if value is a well-formed email address.
+   * @type callable EQUALS      passes if value is equal to test value.
+   * @type callable FROM        passes if min <= value <= max.
+   * @type callable GREATER     passes if value > test value.
+   * @type callable IN          passes if value is one of given values.
+   * @type callable IS_TYPE     passes if value is of given class, type, or pseudotype.
+   * @type callable LESS        passes if value < test value.
+   * @type callable MATCHES     passes if value matches given regular expression.
+   * @type callable NEVER       always fails.
+   * @type callable SIZE        same as FROM, but checks byte length when given a string value.
+   * @type callable URL         passes if value is a well-formed url.
    */
   const AFTER = [self::class, 'after'];
   const ALWAYS = [self::class, 'always'];
   const BEFORE = [self::class, 'before'];
   const BETWEEN = [self::class, 'between'];
+  const BYTELENGTH = [self::class, 'byteLength'];
+  const DOMAIN = [self::class, 'domain'];
   const DURING = [self::class, 'during'];
+  const EMAIL = [self::class, 'email'];
   const EQUALS = [self::class, 'equals'];
   const FROM = [self::class, 'from'];
   const GREATER = [self::class, 'greater'];
-  const IN = [ArrayTools::class, 'contains'];
-  const IS_TYPE = [VarTools::class, 'typeCheck'];
+  const IN = [self::class, 'in']; //[ArrayTools::class, 'contains'];
+  const IS_TYPE = [self::class, 'isType']; //[VarTools::class, 'typeCheck'];
   const LESS = [self::class, 'less'];
   const MATCHES = [self::class, 'matches'];
   const NEVER = [self::class, 'never'];
-  const SIZE = [self::class, 'size'];
+  const URL = [self::class, 'url'];
 
   /**
-   * negations (same as rules above, but negated; replace "passes if" with "fails if")
+   * negations (same as rules above, but opposite result).
    *
-   * @type callable AFTER    same as NOT_GREATER, but treats value as a timestring.
-   * @type callable BEFORE   same as NOT_LESS, but treats value as a timestring.
-   * @type callable BETWEEN  fails if min < value < max.
-   * @type callable DURING   same as NOT_FROM, but treats value as a timestring.
-   * @type callable EQUALS   fails if value is equal to test value.
-   * @type callable FROM     fails if min <= value <= max.
-   * @type callable GREATER  fails if value > test value.
-   * @type callable IN       fails if value is one of given values.
-   * @type callable IS_TYPE  fails if value is of given class, type, or pseudotype.
-   * @type callable LESS     fails if value < test value.
-   * @type callable MATCHES  fails if value matches given regular expression.
-   * @type callable SIZE     same as NOT_FROM, but checks byte length when given a string value.
+   * @type callable NOT_AFTER       same as NOT_GREATER, but treats value as a timestring.
+   * @type callable NOT_BEFORE      same as NOT_LESS, but treats value as a timestring.
+   * @type callable NOT_BETWEEN     fails if min < value < max.
+   * @type callable NOT_DURING      same as NOT_FROM, but treats value as a timestring.
+   * @type callable NOT_EQUALS      fails if value is equal to test value.
+   * @type callable NOT_FROM        fails if min <= value <= max.
+   * @type callable NOT_GREATER     fails if value > test value.
+   * @type callable NOT_IN          fails if value is one of given values.
+   * @type callable NOT_IS_TYPE     fails if value is of given class, type, or pseudotype.
+   * @type callable NOT_LESS        fails if value < test value.
+   * @type callable NOT_MATCHES     fails if value matches given regular expression.
    */
   const NOT_AFTER = [self::class, 'notAfter'];
   const NOT_BEFORE = [self::class, 'notBefore'];
@@ -134,11 +140,10 @@ class Validator {
   const NOT_EQUALS = [self::class, 'notEquals'];
   const NOT_FROM = [self::class, 'notFrom'];
   const NOT_GREATER = [self::class, 'notGreater'];
-  const NOT_IN = [ArrayTools::class, 'notContains'];
-  const NOT_IS_TYPE = [VarTools::class, 'notTypeCheck'];
+  const NOT_IN = [self::class, 'notIn'];
+  const NOT_IS_TYPE = [self::class, 'notIsType'];
   const NOT_LESS = [self::class, 'notLess'];
   const NOT_MATCHES = [self::class, 'notMatches'];
-  const NOT_SIZE = [self::class, 'notSize'];
 
   /**
    * handles negations of other rules.
@@ -171,19 +176,12 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function after($value, $compare) : bool {
-    try {
-      $compare = VarTools::to_DateTime($compare);
-    } catch (Throwable $e) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, $e);
+    $after = VarTools::filter($compare, VarTools::DATETIME);
+    if (! $after) {
+      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $compare]);
     }
-
-    try {
-      $value = VarTools::to_DateTime($value);
-    } catch (Throwable $e) {
-      return false;
-    }
-
-    return self::greater($value, $compare);
+    $value = VarTools::filter($value, VarTools::DATETIME);
+    return ($value !== null) ? self::greater($value, $after) : false;
   }
 
   /**
@@ -262,19 +260,12 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function before($value, $compare) : bool {
-    try {
-      $compare = VarTools::to_DateTime($compare);
-    } catch (Throwable $e) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, $e);
+    $before = VarTools::filter($compare, VarTools::DATETIME);
+    if (! $before) {
+      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $compare]);
     }
-
-    try {
-      $value = VarTools::to_DateTime($value);
-    } catch (Throwable $e) {
-      return false;
-    }
-
-    return self::less($value, $compare);
+    $value = VarTools::filter($value, VarTools::DATETIME);
+    return ($value !== null) ? self::less($value, $before) : false;
   }
 
   /**
@@ -307,6 +298,22 @@ class Validator {
   }
 
   /**
+   * same as FROM, but converts values to string and checks byte length.
+   * values which cannot be converted to string fail.
+   *
+   * @param mixed            $value  the value to test
+   * @param int|float|string $min    minimum value
+   * @param int|float|string $min    minimum value
+   * @return bool                    true if validation succeeds; false otherwise
+   */
+  public static function byteLength($value, int $min, int $max = PHP_INT_MAX) : bool {
+    if (is_scalar($value) || (is_object($value) && method_exists($value, '__toString'))) {
+      return self::from(strlen(strval($value)), $min, $max);
+    }
+    return false;
+  }
+
+  /**
    * same as FROM, but treats value as a timestring.
    *
    * @param mixed                        $value  the value to test
@@ -316,20 +323,40 @@ class Validator {
    * @return bool                                true if validation succeeds; false otherwise
    */
   public static function during($value, $start, $end) : bool {
-    try {
-      $start = VarTools::to_DateTime($start);
-      $end = VarTools::to_DateTime($end);
-    } catch (Throwable $e) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, $e);
+    $dtStart = VarTools::filter($start, VarTools::DATETIME);
+    if (! $dtStart) {
+      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $start]);
+    }
+    $dtEnd = VarTools::filter($end, VarTools::DATETIME);
+    if (! $dtEnd) {
+      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $end]);
     }
 
-    try {
-      $value = VarTools::to_DateTime($value);
-    } catch (Throwable $e) {
-      return false;
-    }
+    $value = VarTools::filter($value, VarTools::DATETIME);
+    return ($value !== null) ? self::from($value, $dtStart, $dtEnd) : false;
+  }
 
-    return self::from($value, $start, $end);
+  /**
+   * passes if the value is a well-formed email address.
+   *
+   * this method works with internationalized email addresses,
+   * but otherwise has the same limitations as FILTER_VALIDATE_EMAIL.
+   *
+   * the only way to validate an email address is to send an email to it, and get a reply back.
+   *
+   * @param mixed $value  the value to test
+   * @return bool         true if validation succeeds; false otherwise
+   */
+  public static function email($value) : bool {
+    return filter_var(
+      preg_replace_callback(
+        '([^@]+)',
+        function ($part) { return idn_to_ascii($part[0], 0, INTL_IDNA_VARIANT_UTS46); },
+        $value
+      ),
+      FILTER_VALIDATE_EMAIL,
+      FILTER_NULL_ON_FAILURE
+    ) !== null;
   }
 
   /**
@@ -343,7 +370,11 @@ class Validator {
    * @return bool           true if validation succeeds; false otherwise
    */
   public static function equals($value, $compare) : bool {
-    if (($value instanceof $compare) && method_exists($compare, 'equals')) {
+    if (
+      (is_string($compare) || is_object($compare)) &&
+      ($value instanceof $compare) &&
+      method_exists($compare, 'equals')
+    ) {
       return $compare->equals($value);
     }
 
@@ -417,16 +448,51 @@ class Validator {
   /**
    * passes if the first rule fails, or if all other rules pass.
    *
-   * @param array ...$rules {
+   * @param bool|array $if       condition
+   * @param array      ...$rules {
    *    @type callable $0    rule to invoke
    *    @type mixed    $...  arguments
    *  }
    * @throws ValidatorException  if invoking a rule fails
    * @return bool                true if validation succeeds; false otherwise
    */
-  public static function if(array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_TEST_ALL, array_shift($rules)) === 0 ||
+  public static function if($if, array ...$rules) : bool {
+    if (is_array($if) && is_callable(reset($if))) {
+      $if = (bool) self::_invokeRuleset(self::RULESET_TEST_ALL, $if);
+    }
+    if (! is_bool($if)) {
+      throw new ValidatorException(
+        ValidatorException::INVALID_CONDITION,
+        ['if' => $if, 'type' => VarTools::type($if)]
+      );
+    }
+
+    return ! $if ||
       self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
+  }
+
+  /**
+   * passes if value matches none of the given values. comparison is strict.
+   * @see ArrayTools::contains()
+   *
+   * @param mixed $value    the value to test
+   * @param array $compare  set of valid values
+   * @return bool           true if validation succeeds; false otherwise
+   */
+  public static function in($value, array $compare) : bool {
+    return ArrayTools::contains($value, $compare, true);
+  }
+
+  /**
+   * passes if value is not one of given (pseudo) types.
+   * @see VarTools::typeCheck()
+   *
+   * @param mixed  $value     the value to test
+   * @param string ...$types  allowed type(s)
+   * @return bool             true if validation succeeds; false otherwise
+   */
+  public static function isType($value, string ...$types) : bool {
+    return VarTools::typeCheck($value, ...$types);
   }
 
   /**
@@ -462,7 +528,16 @@ class Validator {
     if (! is_string($value)) {
       return false;
     }
-    return ($regex instanceof PRO) ? $regex->matches($value) : preg_match($regex, $value) === 1;
+
+    if ($regex instanceof PRO) {
+      return $regex->matches($value);
+    }
+
+    $matches = @preg_match($regex, $value);
+    if ($matches === false) {
+      throw new ValidatorException(ValidatorException::INVALID_REGEX, error_get_last());
+    }
+    return $matches === 1;
   }
 
   /**
@@ -491,18 +566,6 @@ class Validator {
   }
 
   /**
-   * passes if value matches none of the given values.
-   * comparison is strict.
-   *
-   * @param mixed $value    the value to test
-   * @param array $compare  set of valid values
-   * @return bool           true if validation succeeds; false otherwise
-   */
-  public static function notIn($value, array $compare) : bool {
-    return ! ArrayTools::contains($value, $compare, true);
-  }
-
-  /**
    * passes if exactly one of the given rules pass.
    *
    * @param array $rules {
@@ -519,40 +582,51 @@ class Validator {
   }
 
   /**
-   * same as FROM, but checks byte length when given a string value.
-   *
-   * @param mixed            $value  the value to test
-   * @param int|float|string $min    minimum value
-   * @param int|float|string $min    minimum value
-   * @return bool                    true if validation succeeds; false otherwise
-   */
-  public static function size($value, int $min, int $max) : bool {
-    if (is_string($value)) {
-      $value = strlen($value);
-    }
-
-    return self::from($value, $min, $max);
-  }
-
-  /**
    * passes if the first rule passes, or if all other rules pass.
    *
-   * @param array ...$rules {
+   * @param bool|array $if       condition
+   * @param array      ...$rules {
    *    @type callable $0    rule to invoke
    *    @type mixed    $...  arguments
    *  }
    * @throws ValidatorException  if invoking a rule fails
    * @return bool                true if validation succeeds; false otherwise
    */
-  public static function unless(array ...$rules) : bool {
-    return self::_invokeRuleset(self::RULESET_TEST_ALL, array_shift($rules)) === 1 ||
+  public static function unless($if, array ...$rules) : bool {
+    if (is_array($if) && is_callable(reset($if))) {
+      $if = self::_invokeRuleset(self::RULESET_TEST_ALL, $if) > 0;
+    }
+    if (! is_bool($if)) {
+      throw new ValidatorException(
+        ValidatorException::INVALID_CONDITION,
+        ['if' => $if, 'type' => VarTools::type($if)]
+      );
+    }
+
+    return $if ||
       self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
+  }
+
+  /**
+   * passes if the value is a well-formed url.
+   *
+   * does not check the validity of the url, e.g., whether it can be reached or returns OK.
+   *
+   * @param mixed $value  the value to test
+   * @return bool         true if validation succeeds; false otherwise
+   */
+  public static function url($value) : bool {
+    return filter_var(
+      idn_to_ascii($value, 0, INTL_IDNA_VARIANT_UTS46),
+      FILTER_VALIDATE_URL,
+      FILTER_NULL_ON_FAILURE
+    ) !== null;
   }
 
   /**
    * invokes each of given rules in turn.
    *
-   * @param int   $flags    bitmask of RULESET_* constants
+   * @param int   $flag     one of the RULESET_* constants
    * @param array ...$rules {
    *    @type callable $0    rule to invoke
    *    @type mixed    $...  arguments

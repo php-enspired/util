@@ -29,6 +29,16 @@ use PDO as BasePDO,
  */
 class PDO extends BasePDO {
 
+
+  /**
+   * keys for tuple returned by arrayParam().
+   *
+   * @type int PARAM_MARKERS
+   * @type int PARAM_VALUES
+   */
+  const PARAM_MARKERS = 0;
+  const PARAM_VALUES = 1;
+
   /**
    * {@inheritDoc}
    * @see http://php.net/PDO.__construct
@@ -50,8 +60,8 @@ class PDO extends BasePDO {
    * @param array  $values  the values to parameterize
    * @param string $named   name for named parameters (omit for positional parameters)
    * @return array          {
-   *    @type string $0  comma-separated parameter markers (sql fragment)
-   *    @type array  $1  parameter values, as a map or ordered list
+   *    @type string self::PARAM_MARKERS  comma-separated parameter markers (sql fragment)
+   *    @type array  self::PARAM_VALUES   parameter values, as a map or ordered list
    *  }
    */
   public function arrayParam(array $values, string $named = null) {
@@ -70,7 +80,7 @@ class PDO extends BasePDO {
       $values = array_combine($keys, $values);
     }
 
-    return [implode(', ', $keys), $values];
+    return [self::PARAM_MARKERS => implode(', ', $keys), self::PARAM_VALUES => $values];
   }
 
   /**

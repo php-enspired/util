@@ -31,10 +31,14 @@ class ValidatorException extends Exceptable {
    * @type int BAD_CALL_RIPLEY
    * @type int NO_SUCH_RULE
    * @type int INVALID_TIME_VALUE
+   * @type int INVALID_CONDITION
+   * @type int INVALID_REGEX
    */
   const BAD_CALL_RIPLEY = 2;
   const NO_SUCH_RULE = 3;
   const INVALID_TIME_VALUE = 4;
+  const INVALID_CONDITION = 5;
+  const INVALID_REGEX = 6;
 
   /** {@inheritDoc} @see Exceptable::INFO */
   const INFO = [
@@ -49,7 +53,17 @@ class ValidatorException extends Exceptable {
     self::INVALID_TIME_VALUE => [
       'message' => 'invalid time value',
       'severity' => Exceptable::WARNING,
-      'tr_message' => '{__rootMessage__}'
+      'tr_message' => 'invalid time value: {time}'
+    ],
+    self::INVALID_CONDITION => [
+      'message' => 'invalid condition',
+      'severity' => Exceptable::WARNING,
+      'tr_message' => '$if must be boolean or callable; {type} provided'
+    ],
+    self::INVALID_REGEX => [
+      'message' => 'invalid regular expression',
+      'severity' => Exceptable::WARNING,
+      'tr_message' => '{message}'
     ]
   ];
 }

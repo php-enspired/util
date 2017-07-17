@@ -22,9 +22,8 @@
     "phpunit/phpunit": "^5.7"
   },
   "autoload": {
-    "psr-4": {
-      "at\\util\\": "src/"
-    }
+    "psr-4": { "at\\util\\": "src/" },
+    "classmap": ["src/DateTimeable.php"]
   },
   "scripts": {
     "test:unit": "vendor/bin/phpunit --bootstrap vendor/autoload.php tests"

@@ -49,6 +49,21 @@ class Json {
   const PRETTY = self::DEFAULT_ENCODE_OPTIONS | JSON_PRETTY_PRINT;
 
   /**
+   * keys for decode/encode $opts tuple.
+   *
+   * @type int DECODE_OPT_ASSOC
+   * @type int DECODE_OPT_OPTIONS
+   * @type int DECODE_OPT_DEPTH
+   * @type int ENCODE_OPT_OPTIONS
+   * @type int ENCODE_OPT_DEPTH
+   */
+  const DECODE_OPT_ASSOC = 0;
+  const DECODE_OPT_OPTIONS = 1;
+  const DECODE_OPT_DEPTH = 2;
+  const ENCODE_OPT_OPTIONS = 0;
+  const ENCODE_OPT_DEPTH = 1;
+
+  /**
    * wraps json_decode with preferred options and error handling boilerplate.
    *
    * @param string $json       the json string to decode
@@ -61,15 +76,15 @@ class Json {
    * @return mixed             the decoded json data on success
    */
   public static function decode(string $json, array $opts=[]) {
-    $assoc = $opts['assoc'] ?? $opts[0] ?? self::DEFAULT_ASSOC;
-    Vars::typeHint($assoc, 'bool', '$opts[assoc]');
-    $options = $opts['options'] ?? $opts[1] ?? self::DEFAULT_DECODE_OPTIONS;
-    Vars::typeHint($options, 'int', '$opts[options]');
-    $depth = $opts['depth'] ?? $opts[2] ?? self::DEFAULT_DEPTH;
-    Vars::typeHint($depth, 'int', '$opts[depth]');
+    $assoc = $opts[self::DECODE_OPT_ASSOC] ?? self::DEFAULT_ASSOC;
+    Vars::typeHint('$opts[Json::DECODE_OPT_ASSOC]', $assoc, 'bool');
+    $options = $opts[self::DECODE_OPT_OPTIONS] ?? self::DEFAULT_DECODE_OPTIONS;
+    Vars::typeHint('$opts[Json::DECODE_OPT_OPTIONS]', $options, 'int');
+    $depth = $opts[self::DECODE_OPT_DEPTH] ?? self::DEFAULT_DEPTH;
+    Vars::typeHint('$opts[Json::DECODE_OPT_DEPTH]', $depth, 'int');
 
     $value = json_decode($json, $assoc, $depth, $options);
-    if (json_last_error === JSON_ERROR_NONE) {
+    if (json_last_error() === JSON_ERROR_NONE) {
       return $value;
     }
 
@@ -89,10 +104,10 @@ class Json {
    * @return string            the encoded json string on success
    */
   public static function encode($data, array $opts): string {
-    $options = $opts['options'] ?? $opts[0] ?? self::DEFAULT_ENCODE_OPTIONS;
-    Vars::typeHint($options, 'int', '$opts[options]');
-    $depth = $opts['depth'] ?? $opts[1] ?? self::DEFAULT_DEPTH;
-    Vars::typeHint($depth, 'int', '$opts[depth]');
+    $options = $opts[self::ENCODE_OPT_OPTIONS] ?? self::DEFAULT_ENCODE_OPTIONS;
+    Vars::typeHint('$opts[Json::ENCODE_OPT_OPTIONS]', $options, 'int');
+    $depth = $opts[self::ENCODE_OPT_DEPTH] ?? self::DEFAULT_DEPTH;
+    Vars::typeHint('$opts[Json::ENCODE_OPT_DEPTH]', $depth, 'int');
 
     $json = json_encode($data, $options, $depth);
     if (json_last_error() === JSON_ERROR_NONE) {
@@ -109,14 +124,16 @@ class Json {
    * @param string|null &$error  filled with error message, if invalid; null otherwise
    * @return bool                true if value is valid json; false otherwise
    */
-  public static function is_valid($value, &$error = null) {
-    try {
-      self::decode($value);
-      $error = null;
-      return true;
-    } catch (JsonException $e) {
-      $error = $e->getMessage();
-      return false;
+  public static function isValid($value, &$error = null) {
+    if (is_string($value)) {
+      try {
+        self::decode($value);
+        $error = null;
+        return true;
+      } catch (JsonException $e) {
+        $error = $e->getMessage();
+      }
     }
+    return false;
   }
 }
