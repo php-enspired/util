@@ -20,10 +20,14 @@ declare(strict_types = 1);
 
 namespace at\util;
 
-use DateTimeInterface;
-use GMP;
-use Throwable;
-use TypeError;
+use DateTimeInterface,
+    JsonSerializable,
+    stdClass,
+    Throwable,
+    Traversable,
+    TypeError;
+
+use at\exceptable\Handler;
 
 use at\util\ {
   DateTime,
@@ -67,6 +71,13 @@ class VarTools {
   /** @type array  known alias => datatype map. */
   const TYPE_TR = ['double' => self::INT, 'NULL' => self::NULL];
 
+  /**
+   * @type int   OPT_FLAGS    "flags" key for filter() $opts tuple
+   * @type array OPT_OPTIONS  "options" key for filter() $opts tuple
+   */
+  const OPT_FLAGS = 0;
+  const OPT_OPTIONS = 1;
+
 
   /**
    * captures var_dump output and returns it as a string.
@@ -93,6 +104,7 @@ class VarTools {
    *  - callable: will use FILTER_CALLBACK
    *  - NULL: will use FILTER_DEFAULT
    *  - FILTER_VALIDATE_EMAIL: will use Validator::email (handles internationalized emails)
+   *  - Validator::{type} constants will filter for that type
    *
    * callable filters use the following signature:
    *  filter_callback(mixed $value) : mixed
@@ -100,58 +112,67 @@ class VarTools {
    * @param mixed $value        the value to filter
    * @param mixed $filter       filter definition
    * @param array $opts         {
-   *    @type int   $0  flags
-   *    @type array $1  options
+   *    @type int   OPT_FLAGS    filter flags
+   *    @type array OPT_OPTIONS  filter options
    *  }
    * @throws VarToolsException  if a provided callback throws, or if filter definition is invalid
    * @return mixed              the filtered variable on success; or null on failure
    */
-  public static function filter($value, $filter, array $opts = []) {
-    list($flags, $options) = ($opts + [0, []]);
-    self::typeHint('flags', $flags, self::INT);
+  public static function filter($value, $filter = null, array $opts = []) {
+    if ($filter === null) {
+      $filter = FILTER_DEFAULT;
+    }
+    list($flags, $options) = ($opts + [self::OPT_FLAGS => 0, self::OPT_OPTIONS => []]);
+    self::typeHint('$opts[OPT_FLAGS]', $flags, self::INT);
     $flags |= FILTER_NULL_ON_FAILURE;
-    self::typeHint('options', $options, self::ARRAY);
+    self::typeHint('$opts[OPT_OPTIONS]', $options, self::ARRAY);
 
-    switch (true) {
-      case ($filter === null) :
-        $filter = FILTER_DEFAULT;
+
+    $filterMap = [
+      self::BOOL => FILTER_VALIDATE_BOOLEAN,
+      self::FLOAT => FILTER_VALIDATE_FLOAT,
+      self::INT => FILTER_VALIDATE_INT
+    ];
+
+    switch ($filter) {
+      case isset($filterMap[$filter]) :
+        $filter = $filterMap[$filter];
         break;
-      case ($filter === self::BOOL) :
-        $filter = FILTER_VALIDATE_BOOLEAN;
-        break;
-      case ($filter === self::INT) :
-        $filter = FILTER_VALIDATE_INT;
-        break;
-      case ($filter === self::FLOAT) :
-        $filter = FILTER_VALIDATE_FLOAT;
-        break;
-      case ($filter === self::DATETIME) :
-        if ($value instanceof DateTimeInterface) {
-          return $value;
+      case self::ARRAY :
+      case self::ITERABLE :
+        if ($value instanceof Traversable) {
+          $value = iterator_to_array($value);
         }
+        return is_array($value) ? $value : null;
+      case FILTER_VALIDATE_EMAIL :
+        return (Validator::email($value) === $value) ? $value : null;
+      case self::DATETIME :
         try {
-          return is_array($value) ?
-            DateTime::createFromFormat(...$value) :
-            DateTime::create($value);
-        } catch (\Throwable $e) {
+          return ($value instanceof DateTimeInterface) ? $value : DateTime::create($value);
+        } catch (Throwable $e) {
           return null;
         }
-        break;
-      case ($filter === FILTER_VALIDATE_EMAIL) :
-        return Validator::email($value) ? $value : null;
-      case ($filter === FILTER_VALIDATE_URL) :
-        return Validator::url($value) ? $value : null;
       case is_callable($filter) :
         $options = $filter;
         $filter = FILTER_CALLBACK;
         break;
+      case self::STRING :
+        return (is_scalar($value) || method_exists($value, '__toString')) ?
+          strval($value) :
+          null;
+      case is_string($filter) :
+        // also covers self::CALLABLE|JSONABLE|NULL|OBJECT|RESOURCE
+        return self::typeCheck($value, $filter) ? $value : null;
       default: break;
     }
 
     try {
+      $errorExceptions = (new Handler)->throw(E_ALL)->register();
       return filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
     } catch (\Throwable $e) {
       throw new VarToolsException(VarToolsException::BAD_CALL_RIPLEY, $e);
+    } finally {
+      $errorExceptions->unregister();
     }
   }
 
@@ -180,7 +201,7 @@ class VarTools {
    * @return bool       true if variable is iterable; false otherwise
    */
   public static function isIterable($var) {
-    return ($var instanceof \Traversable || is_array($var));
+    return ($var instanceof Traversable || is_array($var));
   }
 
   /**
@@ -193,7 +214,7 @@ class VarTools {
    */
   public static function isJsonable($var) {
     return is_object($var) ?
-      ($var instanceof \JSONSerializable) || ($var instanceof \stdClass) :
+      ($var instanceof JSONSerializable) || ($var instanceof stdClass) :
       ! is_resource($var);
   }
 
@@ -238,6 +259,9 @@ class VarTools {
   /**
    * checks a variable's type against one or more given types/fully qualified classnames,
    * and throws if it does not match any.
+   *
+   * note, the stack trace will start from here:
+   * look at the next line to see where it was actually triggered.
    *
    * @param string   $name    name of given argument (used in Error message)
    * @param mixed    $arg     the argument to test

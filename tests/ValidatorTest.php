@@ -176,11 +176,14 @@ class ValidatorTest extends TestCase {
   }
 
   /**
-   * @todo
    * @covers Validator::email
    * @dataProvider _emailProvider
    */
   public function testEmail($value, bool $expected) {
+    if (! function_exists('idn_to_ascii')) {
+      $this->markTestSkipped('intl must be installed');
+    }
+
     $this->assertEquals(Validator::email($value), $expected);
   }
 
@@ -243,13 +246,13 @@ class ValidatorTest extends TestCase {
 
   /**
    * @return array[] {
-   *    @type string|int|float[] $0  values: [0] subject, [1] min, and [2] max
-   *    @type int                $1  indicates how values are expected to compare:
-   *                                 -1 if $0[0] < $0[1]
-   *                                  0 if $0[0] = $0[1]
-   *                                  1 if $0[0] > $0[1]
-   *                                  2 if $0[0] = $0[2]
-   *                                  3 if $0[0] > $0[2]
+   *    @type mixed[] $0  values: [0] subject, [1] min, and [2] max
+   *    @type int     $1  indicates how values are expected to compare:
+   *                      -1 if $0[0] < $0[1]
+   *                       0 if $0[0] = $0[1]
+   *                       1 if $0[0] > $0[1]
+   *                       2 if $0[0] = $0[2]
+   *                       3 if $0[0] > $0[2]
    *  }
    */
   public function _comparableProvider() : array {
@@ -276,13 +279,13 @@ class ValidatorTest extends TestCase {
 
   /**
    * @return array[] {
-   *    @type string|int|DateTimeInterface[] $0  time values: [0] subject, [1] min, and [2] max
-   *    @type int                            $1  indicates how values are expected to compare:
-   *                                             -1 if $0[0] < $0[1]
-   *                                              0 if $0[0] = $0[1]
-   *                                              1 if $0[0] > $0[1]
-   *                                              2 if $0[0] = $0[2]
-   *                                              3 if $0[0] > $0[2]
+   *    @type mixed[] $0  time values: [0] subject, [1] min, and [2] max
+   *    @type int     $1  indicates how values are expected to compare:
+   *                      -1 if $0[0] < $0[1]
+   *                       0 if $0[0] = $0[1]
+   *                       1 if $0[0] > $0[1]
+   *                       2 if $0[0] = $0[2]
+   *                       3 if $0[0] > $0[2]
    *  }
    */
   public function _datetimeableProvider() : array {
@@ -327,6 +330,12 @@ class ValidatorTest extends TestCase {
     ];
   }
 
+  /**
+   * @return array[] {
+   *    @type mixed $0  the value to test
+   *    @type bool  $1  whether the value should validate as an email address
+   *  }
+   */
   public function _emailProvider() : array {
     return [
       ['用户@例子.广告', true],

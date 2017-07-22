@@ -32,12 +32,13 @@ use at\util\ {
 /**
  * common/convenient validator functions.
  *
- * all rules (validator functions) *must* take the value to test as their first argument.
- * additional arguments may follow.
+ * all rules (validator functions):
+ *  - *must* take the value to test as their first argument; additional arguments *may* follow.
+ *  - *must* return true if the test passes, and false otherwise.
+ *  - *must not* throw exceptions or trigger errors.
  *
  * note, any callable (closures, methods of other classes, built-in php functions, etc.),
- * so long as the follow this convention,
- * may be used in any context where a rule is expected.
+ * may be used anywhere a rule is expected so long as they meet these requirements.
  *
  * the dependency on at\PRO is "soft" (things work just fine if it doesn't exist).
  */
@@ -86,9 +87,7 @@ class Validator {
    * @type callable BEFORE      same as LESS, but treats value as a timestring.
    * @type callable BETWEEN     passes if min < value < max.
    * @type callable BYTELENGTH  same as NOT_FROM, but checks byte length of a string value.
-   * @type callable DOMAIN      passes if value is a well-formed dotted domain name.
    * @type callable DURING      same as FROM, but treats value as a timestring.
-   * @type callable EMAIL       passes if value is a well-formed email address.
    * @type callable EQUALS      passes if value is equal to test value.
    * @type callable FROM        passes if min <= value <= max.
    * @type callable GREATER     passes if value > test value.
@@ -98,29 +97,28 @@ class Validator {
    * @type callable MATCHES     passes if value matches given regular expression.
    * @type callable NEVER       always fails.
    * @type callable SIZE        same as FROM, but checks byte length when given a string value.
-   * @type callable URL         passes if value is a well-formed url.
    */
   const AFTER = [self::class, 'after'];
   const ALWAYS = [self::class, 'always'];
   const BEFORE = [self::class, 'before'];
   const BETWEEN = [self::class, 'between'];
   const BYTELENGTH = [self::class, 'byteLength'];
-  const DOMAIN = [self::class, 'domain'];
   const DURING = [self::class, 'during'];
-  const EMAIL = [self::class, 'email'];
   const EQUALS = [self::class, 'equals'];
   const FROM = [self::class, 'from'];
   const GREATER = [self::class, 'greater'];
-  const IN = [self::class, 'in']; //[ArrayTools::class, 'contains'];
-  const IS_TYPE = [self::class, 'isType']; //[VarTools::class, 'typeCheck'];
+  const IN = [self::class, 'in'];
+  const IS_TYPE = [self::class, 'isType'];
   const LESS = [self::class, 'less'];
   const MATCHES = [self::class, 'matches'];
   const NEVER = [self::class, 'never'];
-  const URL = [self::class, 'url'];
 
   /**
    * negations (same as rules above, but opposite result).
    *
+   * prefer using NOT where possible, as other NOT_* methods eventually invoke it anyway.
+   *
+   * @type callable NOT             negates another rule.
    * @type callable NOT_AFTER       same as NOT_GREATER, but treats value as a timestring.
    * @type callable NOT_BEFORE      same as NOT_LESS, but treats value as a timestring.
    * @type callable NOT_BETWEEN     fails if min < value < max.
@@ -133,6 +131,7 @@ class Validator {
    * @type callable NOT_LESS        fails if value < test value.
    * @type callable NOT_MATCHES     fails if value matches given regular expression.
    */
+  const NOT = [self::class, 'not'];
   const NOT_AFTER = [self::class, 'notAfter'];
   const NOT_BEFORE = [self::class, 'notBefore'];
   const NOT_BETWEEN = [self::class, 'notBetween'];
@@ -146,7 +145,6 @@ class Validator {
   const NOT_MATCHES = [self::class, 'notMatches'];
 
   /**
-   * handles negations of other rules.
    * {@inheritDoc}
    * @see http://php.net/__callStatic
    *
@@ -156,15 +154,15 @@ class Validator {
   public static function __callStatic($name, $arguments) {
     if (strpos($name, 'not') === 0) {
       $rule = substr($name, 3);
-      if (! method_exists(static::class, $rule)) {
-        throw new ValidatorException(
-          ValidatorException::NO_SUCH_RULE,
-          ['rule' => static::class . "::{$name}"]
-        );
+      if (method_exists(static::class, $rule)) {
+        return self::not([static::class, $rule], ...$arguments);
       }
-
-      return ! [static::class, $rule](...$arguments);
     }
+
+    throw new ValidatorException(
+      ValidatorException::NO_SUCH_RULE,
+      ['rule' => static::class . "::{$name}"]
+    );
   }
 
   /**
@@ -178,7 +176,10 @@ class Validator {
   public static function after($value, $compare) : bool {
     $after = VarTools::filter($compare, VarTools::DATETIME);
     if (! $after) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $compare]);
+      throw new ValidatorException(
+        ValidatorException::INVALID_TIME_VALUE,
+        ['time' => $compare]
+      );
     }
     $value = VarTools::filter($value, VarTools::DATETIME);
     return ($value !== null) ? self::greater($value, $after) : false;
@@ -262,7 +263,10 @@ class Validator {
   public static function before($value, $compare) : bool {
     $before = VarTools::filter($compare, VarTools::DATETIME);
     if (! $before) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $compare]);
+      throw new ValidatorException(
+        ValidatorException::INVALID_TIME_VALUE,
+        ['time' => $compare]
+      );
     }
     $value = VarTools::filter($value, VarTools::DATETIME);
     return ($value !== null) ? self::less($value, $before) : false;
@@ -354,9 +358,8 @@ class Validator {
         function ($part) { return idn_to_ascii($part[0], 0, INTL_IDNA_VARIANT_UTS46); },
         $value
       ),
-      FILTER_VALIDATE_EMAIL,
-      FILTER_NULL_ON_FAILURE
-    ) !== null;
+      FILTER_VALIDATE_EMAIL
+    ) !== false;
   }
 
   /**
@@ -566,6 +569,18 @@ class Validator {
   }
 
   /**
+   * handles negations of other rules.
+   *
+   * @param callable $rule         the rule to negate
+   * @param mixed    …$arguments   arguments to invoke the rule with
+   * @throws ValidatorException    if invoking the rule fails
+   * @return bool                  true if validation succeeds; false otherwise
+   */
+  public function not(callable $rule, ...$arguments) : bool {
+    return ! $rule(...$arguments);
+  }
+
+  /**
    * passes if exactly one of the given rules pass.
    *
    * @param array $rules {
@@ -605,22 +620,6 @@ class Validator {
 
     return $if ||
       self::_invokeRuleset(self::RULESET_RETURN_ON_FAILURE, ...$rules) === count($rules);
-  }
-
-  /**
-   * passes if the value is a well-formed url.
-   *
-   * does not check the validity of the url, e.g., whether it can be reached or returns OK.
-   *
-   * @param mixed $value  the value to test
-   * @return bool         true if validation succeeds; false otherwise
-   */
-  public static function url($value) : bool {
-    return filter_var(
-      idn_to_ascii($value, 0, INTL_IDNA_VARIANT_UTS46),
-      FILTER_VALIDATE_URL,
-      FILTER_NULL_ON_FAILURE
-    ) !== null;
   }
 
   /**

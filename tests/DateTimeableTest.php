@@ -58,7 +58,7 @@ class DateTimeableTest extends TestCase {
    *      @type string|int|float $0  a datetimeable value
    *      @type DateTimeZone     $1  a DateTimeZone instance
    *    }
-   *    @type string $1  the expected date/time, in RFC 2822 ("r") format
+   *    @type DateTimeInterface $1  a DateTime instance that the test is expected to match
    *  }
    */
   public function _timeableProvider() : array {
@@ -80,18 +80,6 @@ class DateTimeableTest extends TestCase {
     $nowDTZ = new BaseDateTimeImmutable('now', $Z);
     $tomorrowDTZ = new DateTimeImmutable('tomorrow', $Z);
     $laterDTZ = new BaseDateTimeImmutable('28 July 2061', $Z);
-
-    //$thenR = $then->format('r');
-    //$yesterdayR = $yesterday->format('r');
-    //$nowR = $now->format('r');
-    //$tomorrowR = $tomorrow->format('r');
-    //$laterR = $later->format('r');
-    //
-    //$thenRZ = $thenZ->format('r');
-    //$yesterdayRZ = $yesterdayZ->format('r');
-    //$nowRZ = $nowZ->format('r');
-    //$tomorrowRZ = $tomorrowZ->format('r');
-    //$laterRZ = $laterZ->format('r');
 
     return [
       [[$then, null], $thenDT],

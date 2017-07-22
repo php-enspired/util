@@ -65,12 +65,15 @@ class PDOTest extends TestCase {
 
     list($markers, $values) = $pdo->arrayParam($params, 'marker');
     $this->assertEquals($markers, ':marker_0, :marker_1, :marker_2, :marker_3');
-    $this->assertEquals($values, [
-      ':marker_0' => 'foo',
-      ':marker_1' => 'bar',
-      ':marker_2' => 'baz',
-      ':marker_3' => 'bazinga'
-    ]);
+    $this->assertEquals(
+      $values,
+      [
+        ':marker_0' => 'foo',
+        ':marker_1' => 'bar',
+        ':marker_2' => 'baz',
+        ':marker_3' => 'bazinga'
+      ]
+    );
   }
 
   /**
@@ -114,6 +117,10 @@ class PDOTest extends TestCase {
    * @return PDO
    */
   protected function _newPDO(array $options = []) : PDO {
+    if (! in_array('sqlite', PDO::getAvailableDrivers())) {
+      $this->markTestSkipped('PDO::SQLite driver not available');
+    }
+
     return new PDO('sqlite::memory', null, null, $options);
   }
 }
