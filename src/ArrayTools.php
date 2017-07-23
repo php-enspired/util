@@ -195,11 +195,11 @@ class ArrayTools {
     $array_name = "array_{$name}";
 
     foreach ([$name, $array_name] as $function) {
-      if (in_array($function, self::ARRAY_FUNCTIONS)) {
+      if (isset(self::ARRAY_FUNCTIONS[$function])) {
         return $function(...$arguments);
       }
 
-      if (in_array($function, self::ARRAY_REF_FUNCTIONS)) {
+      if (isset(self::ARRAY_REF_FUNCTIONS[$function])) {
         $subject = array_shift($arguments);
         $function($subject, ...$arguments);
         return $subject;
