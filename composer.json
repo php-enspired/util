@@ -23,7 +23,10 @@
   },
   "autoload": {
     "psr-4": { "at\\util\\": "src/" },
-    "classmap": ["src/DateTimeable.php"]
+    "classmap": [
+      "src/DateTimeable.php",
+      "src/Json.php"
+    ]
   },
   "scripts": {
     "test:unit": "vendor/bin/phpunit --bootstrap vendor/autoload.php tests"

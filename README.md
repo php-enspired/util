@@ -11,15 +11,15 @@ Also proxies many built-in php array functions, and removes the by-reference beh
 
 * ### DateTimeable
 
-Extends the `DateTime` classes to accept floats/integers as unix timestamps.
+Extends the `DateTime` classes to accept floats/integers as unix timestamps, with microsecond support.
 
 * ### Json
 
-Wraps JSON functions with sensible defaults and exception-based error handling.
+Wraps JSON functions with sensible defaults and exception-based error handling.  Extends the `jsonSerializable` interface with `toArray()` and `toJson()`.
 
 * ### PDO
 
-More secure default options for PDO, and convenience methods such as `preparedQuery()` and `arrayParam()` (for dynamically generating parameter markers for an array of values).
+Sets more secure default options for PDO, and provides convenience methods for preparing+executing a query in one step, and for dynamically generating parameter markers for an array of values.
 
 * ### Validator
 
@@ -43,11 +43,6 @@ installation
 _util_ is currently **unreleased**.  It is **NOT FOR PRODUCTION USE**.
 
 I don't expect much to change before release, but until then, you'll have to clone it and manually `composer install` if you want to play around with it.
-
-docs
-----
-
-…forthcoming
 
 tests
 -----
