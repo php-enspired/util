@@ -91,12 +91,12 @@ class Validator {
    * @type callable EQUALS      passes if value is equal to test value.
    * @type callable FROM        passes if min <= value <= max.
    * @type callable GREATER     passes if value > test value.
-   * @type callable IN          passes if value is one of given values.
    * @type callable IS_TYPE     passes if value is of given class, type, or pseudotype.
    * @type callable LESS        passes if value < test value.
    * @type callable MATCHES     passes if value matches given regular expression.
    * @type callable NEVER       always fails.
    * @type callable SIZE        same as FROM, but checks byte length when given a string value.
+   * @type callable ONE_OF      passes if value is one of given values.
    */
   const AFTER = [self::class, 'after'];
   const ALWAYS = [self::class, 'always'];
@@ -107,11 +107,11 @@ class Validator {
   const EQUALS = [self::class, 'equals'];
   const FROM = [self::class, 'from'];
   const GREATER = [self::class, 'greater'];
-  const IN = [self::class, 'in'];
   const IS_TYPE = [self::class, 'isType'];
   const LESS = [self::class, 'less'];
   const MATCHES = [self::class, 'matches'];
   const NEVER = [self::class, 'never'];
+  const ONE_OF = [self::class, 'oneOf'];
 
   /**
    * negations (same as rules above, but opposite result).
@@ -126,10 +126,10 @@ class Validator {
    * @type callable NOT_EQUALS      fails if value is equal to test value.
    * @type callable NOT_FROM        fails if min <= value <= max.
    * @type callable NOT_GREATER     fails if value > test value.
-   * @type callable NOT_IN          fails if value is one of given values.
    * @type callable NOT_IS_TYPE     fails if value is of given class, type, or pseudotype.
    * @type callable NOT_LESS        fails if value < test value.
    * @type callable NOT_MATCHES     fails if value matches given regular expression.
+   * @type callable NOT_ONE_OF      fails if value is one of given values.
    */
   const NOT = [self::class, 'not'];
   const NOT_AFTER = [self::class, 'notAfter'];
@@ -139,10 +139,10 @@ class Validator {
   const NOT_EQUALS = [self::class, 'notEquals'];
   const NOT_FROM = [self::class, 'notFrom'];
   const NOT_GREATER = [self::class, 'notGreater'];
-  const NOT_IN = [self::class, 'notIn'];
   const NOT_IS_TYPE = [self::class, 'notIsType'];
   const NOT_LESS = [self::class, 'notLess'];
   const NOT_MATCHES = [self::class, 'notMatches'];
+  const NOT_ONE_OF = [self::class, 'notOneOf'];
 
   /**
    * {@inheritDoc}
@@ -475,18 +475,6 @@ class Validator {
   }
 
   /**
-   * passes if value matches none of the given values. comparison is strict.
-   * @see ArrayTools::contains()
-   *
-   * @param mixed $value    the value to test
-   * @param array $compare  set of valid values
-   * @return bool           true if validation succeeds; false otherwise
-   */
-  public static function in($value, array $compare) : bool {
-    return ArrayTools::contains($value, $compare, true);
-  }
-
-  /**
    * passes if value is not one of given (pseudo) types.
    * @see VarTools::typeCheck()
    *
@@ -594,6 +582,18 @@ class Validator {
    */
   public static function one(array ...$rules) : bool {
     return self::exactly(1, ...$rules);
+  }
+
+  /**
+   * passes if value matches none of the given values. comparison is strict.
+   * @see ArrayTools::contains()
+   *
+   * @param mixed $value    the value to test
+   * @param array $compare  set of valid values
+   * @return bool           true if validation succeeds; false otherwise
+   */
+  public static function oneOf($value, array $compare) : bool {
+    return ArrayTools::contains($value, $compare, true);
   }
 
   /**

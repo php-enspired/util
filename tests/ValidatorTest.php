@@ -310,11 +310,11 @@ class ValidatorTest extends TestCase {
       [[$maxDT, $minDT, $maxDT], 2],
       [[$maxDT, $minDT, $midDT], 3],
 
-      [[$minDT->format('U'), $midDT->format('U'), $maxDT->format('U')], -1],
-      [[$minDT->format('U'), $minDT->format('U'), $maxDT->format('U')], 0],
-      [[$midDT->format('U'), $minDT->format('U'), $maxDT->format('U')], 1],
-      [[$maxDT->format('U'), $minDT->format('U'), $maxDT->format('U')], 2],
-      [[$maxDT->format('U'), $minDT->format('U'), $midDT->format('U')], 3],
+      [[(int) $minDT->format('U'), (int) $midDT->format('U'), (int) $maxDT->format('U')], -1],
+      [[(int) $minDT->format('U'), (int) $minDT->format('U'), (int) $maxDT->format('U')], 0],
+      [[(int) $midDT->format('U'), (int) $minDT->format('U'), (int) $maxDT->format('U')], 1],
+      [[(int) $maxDT->format('U'), (int) $minDT->format('U'), (int) $maxDT->format('U')], 2],
+      [[(int) $maxDT->format('U'), (int) $minDT->format('U'), (int) $midDT->format('U')], 3],
 
       [[$minDT->format('r'), $midDT->format('r'), $maxDT->format('r')], -1],
       [[$minDT->format('r'), $minDT->format('r'), $maxDT->format('r')], 0],
@@ -322,11 +322,11 @@ class ValidatorTest extends TestCase {
       [[$maxDT->format('r'), $minDT->format('r'), $maxDT->format('r')], 2],
       [[$maxDT->format('r'), $minDT->format('r'), $midDT->format('r')], 3],
 
-      [[$min, $midDT, $maxDT->format('U')], -1],
-      [[$minDT, $minDT->format('U'), $maxDT->format('r')], 0],
-      [[$midDT->format('U'), $minDT->format('r'), $max], 1],
-      [[$maxDT->format('r'), $min, $maxDT->format('U')], 2],
-      [[$maxDT->format('r'), $min, $midDT->format('U')], 3]
+      [[$min, $midDT, (int) $maxDT->format('U')], -1],
+      [[$minDT, (int) $minDT->format('U'), $maxDT->format('r')], 0],
+      [[(int) $midDT->format('U'), $minDT->format('r'), $max], 1],
+      [[$maxDT->format('r'), $min, (int) $maxDT->format('U')], 2],
+      [[$maxDT->format('r'), $min, (int) $midDT->format('U')], 3]
     ];
   }
 
