@@ -20,7 +20,10 @@ declare(strict_types = 1);
 
 namespace at\util;
 
-use at\exceptable\Exception as Exceptable;
+use at\util\ {
+  JsonException,
+  VarTools
+};
 
 /**
  * wraps JSON functions with sensible defaults and error handling boilerplate.
@@ -77,11 +80,11 @@ class Json {
    */
   public static function decode(string $json, array $opts=[]) {
     $assoc = $opts[self::DECODE_ASSOC] ?? self::DEFAULT_ASSOC;
-    Vars::typeHint('$opts[Json::DECODE_ASSOC]', $assoc, 'bool');
+    VarTools::typeHint('$opts[Json::DECODE_ASSOC]', $assoc, 'bool');
     $options = $opts[self::DECODE_OPTIONS] ?? self::DEFAULT_DECODE_OPTIONS;
-    Vars::typeHint('$opts[Json::DECODE_OPTIONS]', $options, 'int');
+    VarTools::typeHint('$opts[Json::DECODE_OPTIONS]', $options, 'int');
     $depth = $opts[self::DECODE_DEPTH] ?? self::DEFAULT_DEPTH;
-    Vars::typeHint('$opts[Json::DECODE_DEPTH]', $depth, 'int');
+    VarTools::typeHint('$opts[Json::DECODE_DEPTH]', $depth, 'int');
 
     $value = json_decode($json, $assoc, $depth, $options);
     if (json_last_error() === JSON_ERROR_NONE) {
@@ -105,9 +108,9 @@ class Json {
    */
   public static function encode($data, array $opts): string {
     $options = $opts[self::ENCODE_OPTIONS] ?? self::DEFAULT_ENCODE_OPTIONS;
-    Vars::typeHint('$opts[Json::ENCODE_OPTIONS]', $options, 'int');
+    VarTools::typeHint('$opts[Json::ENCODE_OPTIONS]', $options, 'int');
     $depth = $opts[self::ENCODE_DEPTH] ?? self::DEFAULT_DEPTH;
-    Vars::typeHint('$opts[Json::ENCODE_DEPTH]', $depth, 'int');
+    VarTools::typeHint('$opts[Json::ENCODE_DEPTH]', $depth, 'int');
 
     $json = json_encode($data, $options, $depth);
     if (json_last_error() === JSON_ERROR_NONE) {
@@ -135,60 +138,5 @@ class Json {
       }
     }
     return false;
-  }
-}
-
-/**
- * represents error cases in encoding/decoding json data.
- *
- * preferred usage is to omit the $message and $code;
- * they will be retrieved from json_last_error() and json_last_error_msg().
- */
-class JsonException extends Exceptable {
-
-  /** @see Exceptable::INFO */
-  const INFO = [
-    JSON_ERROR_NONE => ['message' => 'no error has occurred'],
-    JSON_ERROR_DEPTH => ['message' => 'the maximum stack depth has been exceeded'],
-    JSON_ERROR_STATE_MISMATCH => ['message' => 'invalid or malformed JSON'],
-    JSON_ERROR_CTRL_CHAR =>
-      ['message' => 'control character error, possibly incorrectly encoded'],
-    JSON_ERROR_SYNTAX => ['message' => 'syntax error'],
-    JSON_ERROR_UTF8 =>
-      ['message' => 'malformed UTF-8 characters, possibly incorrectly encoded'],
-    JSON_ERROR_RECURSION =>
-      ['message' => 'one or more recursive references in the value to be encoded'],
-    JSON_ERROR_INF_OR_NAN =>
-      ['message' => 'one or more NAN or INF values in the value to be encoded'],
-    JSON_ERROR_UNSUPPORTED_TYPE =>
-      ['message' => 'a value of a type that cannot be encoded was given'],
-    JSON_ERROR_INVALID_PROPERTY_NAME =>
-      ['message' => 'a property name that cannot be encoded was given'],
-    JSON_ERROR_UTF16 =>
-      ['message' => 'malformed UTF-16 characters, possibly incorrectly encoded']
-  ];
-
-  /** @see Exceptable::_makeCode() */
-  protected function _makeCode() : int {
-    return json_last_error();
-  }
-
-  /** @see Exceptable::_makeMessage() */
-  protected function _makeMessage() : int {
-    $message = ($this->_code === json_last_error()) ?
-      json_last_error_msg() :
-      static::get_info($this->_code)['message'];
-
-    if (isset($this->_context['json'])) {
-      $message .= "\n json: {$this->_context['json']}";
-    }
-    if (isset($this->_context['data'])) {
-      $message .= "\n data: " . serialize($this->_context['data']);
-    }
-    if (isset($this->_context['opts'])) {
-      $message .= "\n opts: " . Json::encode($opts, [Json::PRETTY]);
-    }
-
-    return $message;
   }
 }
