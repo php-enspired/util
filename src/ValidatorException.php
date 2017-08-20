@@ -34,11 +34,11 @@ class ValidatorException extends Exceptable {
    * @type int INVALID_CONDITION
    * @type int INVALID_REGEX
    */
-  const BAD_CALL_RIPLEY = 2;
-  const NO_SUCH_RULE = 3;
-  const INVALID_TIME_VALUE = 4;
-  const INVALID_CONDITION = 5;
-  const INVALID_REGEX = 6;
+  const BAD_CALL_RIPLEY = (1<<1);
+  const NO_SUCH_RULE = (1<<2);
+  const INVALID_TIME_VALUE = (1<<3);
+  const INVALID_CONDITION = (1<<4);
+  const INVALID_REGEX = (1<<5);
 
   /** {@inheritDoc} @see Exceptable::INFO */
   const INFO = [

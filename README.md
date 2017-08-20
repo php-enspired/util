@@ -5,11 +5,11 @@ util
 
 Various PHP utility classes and interfaces/traits for general use.
 
-* ### ArrayTools
+* ### Arrays
 
 Utility functions for arrays; also proxies many built-in php array functions, and removes the by-reference behavior found on the `*sort()` functions and some others.
 
-* ### DateTimeable
+* ### DateTime
 
 Extends the `DateTime` classes to accept floats/integers as unix timestamps, with microsecond support.
 
@@ -25,7 +25,7 @@ Sets more secure default options for PDO, and provides a few convenience methods
 
 Methods for validating common conditions (comparisons, sizes/ranges, lists, pattern matching) as well as structures for conditionally applying sets of rules.
 
-* ### VarTools
+* ### Vars
 
 Utility functions for general variable handling, such as type checking and filtering.
 

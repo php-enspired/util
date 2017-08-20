@@ -22,70 +22,70 @@ namespace at\util;
 
 use TypeError;
 
-use at\util\ArrayToolsException;
+use at\util\ArraysException;
 
 /**
  * utility functions for arrays.
  *
- * @method array ArrayTools::arsort()            @see http://php.net/arsort
- * @method array ArrayTools::asort()             @see http://php.net/asort
- * @method array ArrayTools::changeKeyCase()     @see http://php.net/array_change_key_case
- * @method array ArrayTools::chunk()             @see http://php.net/array_chunk
- * @method array ArrayTools::column()            @see http://php.net/array_column
- * @method array ArrayTools::combine()           @see http://php.net/array_combine
- * @method array ArrayTools::countValues()       @see http://php.net/array_count_values
- * @method array ArrayTools::diffAssoc()         @see http://php.net/array_diff_assoc
- * @method array ArrayTools::diffKey()           @see http://php.net/array_diff_key
- * @method array ArrayTools::diffUassoc()        @see http://php.net/array_diff_uassoc
- * @method array ArrayTools::diffUkey()          @see http://php.net/array_diff_ukey
- * @method array ArrayTools::diff()              @see http://php.net/array_diff
- * @method array ArrayTools::fillKeys()          @see http://php.net/array_fill_keys
- * @method array ArrayTools::fill()              @see http://php.net/array_fill
- * @method array ArrayTools::filter()            @see http://php.net/array_filter
- * @method array ArrayTools::flip()              @see http://php.net/array_flip
- * @method array ArrayTools::intersectAssoc()    @see http://php.net/array_intersect_assoc
- * @method array ArrayTools::intersectKey()      @see http://php.net/array_intersect_key
- * @method array ArrayTools::intersectUassoc()   @see http://php.net/array_intersect_uassoc
- * @method array ArrayTools::intersectUkey()     @see http://php.net/array_intersect_ukey
- * @method array ArrayTools::intersect()         @see http://php.net/array_intersect
- * @method array ArrayTools::key_exists()        @see http://php.net/array_key_exists
- * @method array ArrayTools::keys()              @see http://php.net/array_keys
- * @method array ArrayTools::krsort()            @see http://php.net/krsort
- * @method array ArrayTools::ksort()             @see http://php.net/ksort
- * @method array ArrayTools::map()               @see http://php.net/array_map
- * @method array ArrayTools::mergeRecursive()    @see http://php.net/array_merge_recursive
- * @method array ArrayTools::merge()             @see http://php.net/array_merge
- * @method array ArrayTools::natcasesort()       @see http://php.net/array_natcasesort
- * @method array ArrayTools::natsort()           @see http://php.net/natsort
- * @method array ArrayTools::pad()               @see http://php.net/array_pad
- * @method mixed ArrayTools::product()           @see http://php.net/array_product
- * @method array ArrayTools::push()              @see http://php.net/array_push
- * @method mixed ArrayTools::rand()              @see http://php.net/array_rand
- * @method mixed ArrayTools::reduce()            @see http://php.net/array_reduce
- * @method array ArrayTools::replaceRecursive()  @see http://php.net/array_replace_recursive
- * @method array ArrayTools::replace()           @see http://php.net/array_replace
- * @method array ArrayTools::reverse()           @see http://php.net/array_reverse
- * @method array ArrayTools::rsort()             @see http://php.net/rsort
- * @method mixed ArrayTools::search()            @see http://php.net/array_search
- * @method array ArrayTools::shuffle()           @see http://php.net/shuffle
- * @method array ArrayTools::slice()             @see http://php.net/array_slice
- * @method array ArrayTools::sort()              @see http://php.net/sort
- * @method array ArrayTools::splice()            @see http://php.net/array_splice
- * @method mixed ArrayTools::sum()               @see http://php.net/array_sum
- * @method array ArrayTools::uasort()            @see http://php.net/uasort
- * @method array ArrayTools::udiffAssoc()        @see http://php.net/array_udiff_assoc
- * @method array ArrayTools::udiffUassoc()       @see http://php.net/array_udiff_uassoc
- * @method array ArrayTools::udiff()             @see http://php.net/array_udiff
- * @method array ArrayTools::uintersectAssoc()   @see http://php.net/array_uintersect_assoc
- * @method array ArrayTools::uintersectUassoc()  @see http://php.net/array_uintersect_uassoc
- * @method array ArrayTools::uintersect()        @see http://php.net/array_uintersect
- * @method array ArrayTools::uksort()            @see http://php.net/uksort
- * @method array ArrayTools::unique()            @see http://php.net/array_unique
- * @method array ArrayTools::unshift()           @see http://php.net/array_unshift
- * @method array ArrayTools::usort()             @see http://php.net/usort
- * @method array ArrayTools::values()            @see http://php.net/array_values
+ * @method array Arrays::arsort()            @see http://php.net/arsort
+ * @method array Arrays::asort()             @see http://php.net/asort
+ * @method array Arrays::changeKeyCase()     @see http://php.net/array_change_key_case
+ * @method array Arrays::chunk()             @see http://php.net/array_chunk
+ * @method array Arrays::column()            @see http://php.net/array_column
+ * @method array Arrays::combine()           @see http://php.net/array_combine
+ * @method array Arrays::countValues()       @see http://php.net/array_count_values
+ * @method array Arrays::diffAssoc()         @see http://php.net/array_diff_assoc
+ * @method array Arrays::diffKey()           @see http://php.net/array_diff_key
+ * @method array Arrays::diffUassoc()        @see http://php.net/array_diff_uassoc
+ * @method array Arrays::diffUkey()          @see http://php.net/array_diff_ukey
+ * @method array Arrays::diff()              @see http://php.net/array_diff
+ * @method array Arrays::fillKeys()          @see http://php.net/array_fill_keys
+ * @method array Arrays::fill()              @see http://php.net/array_fill
+ * @method array Arrays::filter()            @see http://php.net/array_filter
+ * @method array Arrays::flip()              @see http://php.net/array_flip
+ * @method array Arrays::intersectAssoc()    @see http://php.net/array_intersect_assoc
+ * @method array Arrays::intersectKey()      @see http://php.net/array_intersect_key
+ * @method array Arrays::intersectUassoc()   @see http://php.net/array_intersect_uassoc
+ * @method array Arrays::intersectUkey()     @see http://php.net/array_intersect_ukey
+ * @method array Arrays::intersect()         @see http://php.net/array_intersect
+ * @method array Arrays::key_exists()        @see http://php.net/array_key_exists
+ * @method array Arrays::keys()              @see http://php.net/array_keys
+ * @method array Arrays::krsort()            @see http://php.net/krsort
+ * @method array Arrays::ksort()             @see http://php.net/ksort
+ * @method array Arrays::map()               @see http://php.net/array_map
+ * @method array Arrays::mergeRecursive()    @see http://php.net/array_merge_recursive
+ * @method array Arrays::merge()             @see http://php.net/array_merge
+ * @method array Arrays::natcasesort()       @see http://php.net/array_natcasesort
+ * @method array Arrays::natsort()           @see http://php.net/natsort
+ * @method array Arrays::pad()               @see http://php.net/array_pad
+ * @method mixed Arrays::product()           @see http://php.net/array_product
+ * @method array Arrays::push()              @see http://php.net/array_push
+ * @method mixed Arrays::rand()              @see http://php.net/array_rand
+ * @method mixed Arrays::reduce()            @see http://php.net/array_reduce
+ * @method array Arrays::replaceRecursive()  @see http://php.net/array_replace_recursive
+ * @method array Arrays::replace()           @see http://php.net/array_replace
+ * @method array Arrays::reverse()           @see http://php.net/array_reverse
+ * @method array Arrays::rsort()             @see http://php.net/rsort
+ * @method mixed Arrays::search()            @see http://php.net/array_search
+ * @method array Arrays::shuffle()           @see http://php.net/shuffle
+ * @method array Arrays::slice()             @see http://php.net/array_slice
+ * @method array Arrays::sort()              @see http://php.net/sort
+ * @method array Arrays::splice()            @see http://php.net/array_splice
+ * @method mixed Arrays::sum()               @see http://php.net/array_sum
+ * @method array Arrays::uasort()            @see http://php.net/uasort
+ * @method array Arrays::udiffAssoc()        @see http://php.net/array_udiff_assoc
+ * @method array Arrays::udiffUassoc()       @see http://php.net/array_udiff_uassoc
+ * @method array Arrays::udiff()             @see http://php.net/array_udiff
+ * @method array Arrays::uintersectAssoc()   @see http://php.net/array_uintersect_assoc
+ * @method array Arrays::uintersectUassoc()  @see http://php.net/array_uintersect_uassoc
+ * @method array Arrays::uintersect()        @see http://php.net/array_uintersect
+ * @method array Arrays::uksort()            @see http://php.net/uksort
+ * @method array Arrays::unique()            @see http://php.net/array_unique
+ * @method array Arrays::unshift()           @see http://php.net/array_unshift
+ * @method array Arrays::usort()             @see http://php.net/usort
+ * @method array Arrays::values()            @see http://php.net/array_values
  */
-class ArrayTools {
+class Arrays {
 
   /** @type callable[]  list of supported array_* functions. */
   const ARRAY_FUNCTIONS = [
@@ -187,7 +187,7 @@ class ArrayTools {
    *
    * @param string $name          function to proxy
    * @param mixed  ...$arguments  function arguments
-   * @throws ArrayToolsException  if the method is not supported
+   * @throws ArraysException  if the method is not supported
    * @return mixed                subject array if the native function takes it by reference;
    *                              native return value of the function otherwise
    */
@@ -206,7 +206,7 @@ class ArrayTools {
       return $subject;
     }
 
-    throw new ArrayToolsException(ArrayToolsException::NO_SUCH_METHOD, ['method' => $name]);
+    throw new ArraysException(ArraysException::NO_SUCH_METHOD, ['method' => $name]);
   }
 
   /**
@@ -214,14 +214,14 @@ class ArrayTools {
    *
    * @param array $subject         the subject array
    * @param array $index           key of column to categorize by
-   * @throws ArrayToolssException  if key is not present in all rows
+   * @throws ArrayssException  if key is not present in all rows
    * @return array                 the categorized array
    */
   public static function categorize(array $subject, $key) {
     $categorized = [];
     foreach ($subject as $row) {
       if (! isset($row[$key])) {
-        throw new ArrayToolsException(ArrayToolsException::INVALID_CATEGORY_KEY, ['key' => $key]);
+        throw new ArraysException(ArraysException::INVALID_CATEGORY_KEY, ['key' => $key]);
       }
       $categorized[$row[$key]][] = $row;
     }
@@ -248,7 +248,7 @@ class ArrayTools {
    *    @type string self::OPT_DELIM  the delimiter to split the path on (defaults to '.')
    *    @type bool   self::OPT_THROW  throw if the path does not exist (defaults to false)?
    *  }
-   * @throws ArrayToolsException  if the path does not exist in the subject array
+   * @throws ArraysException  if the path does not exist in the subject array
    * @return mixed                the value at the given path if it exists; null otherwise
    */
   public static function dig(array $subject, string $path, array $opts = []) {
@@ -258,7 +258,7 @@ class ArrayTools {
     foreach (explode($delim, $path) as $key) {
       if (! (is_array($subject) && isset($subject[$key]))) {
         if ($throw) {
-          throw new ArrayToolsException(ArrayToolsException::INVALID_PATH, ['path' => $path]);
+          throw new ArraysException(ArraysException::INVALID_PATH, ['path' => $path]);
         }
         return null;
       }
@@ -325,14 +325,14 @@ class ArrayTools {
    *
    * @param array $subject        the subject array
    * @param int   $number         the number of items to pick (must be a positive integer)
-   * @throws ArrayToolsException  when trying to pick more items than are in the array
+   * @throws ArraysException  when trying to pick more items than are in the array
    * @return scalar|scalar[]      the selected key(s)
    */
   public static function random(array $subject, int $number = 1) {
     $count = count($subject);
     if ($number < 1 || $number > $count) {
-      throw new ArrayToolsException(
-        ArrayToolsException::INVALID_SAMPLE_SIZE,
+      throw new ArraysException(
+        ArraysException::INVALID_SAMPLE_SIZE,
         ['count' => $count, 'size' => $number]
       );
     }

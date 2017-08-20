@@ -25,7 +25,7 @@ use at\exceptable\Exception as Exceptable;
 /**
  * error cases for arraytool methods.
  */
-class ArrayToolsException extends Exceptable {
+class ArraysException extends Exceptable {
 
   /**
    * @type int NO_SUCH_METHOD
@@ -33,16 +33,16 @@ class ArrayToolsException extends Exceptable {
    * @type int INVALID_PATH
    * @type int INVALID_SAMPLE_SIZE
    */
-  const NO_SUCH_METHOD = 2;
-  const INVALID_CATEGORY_KEY = 3;
-  const INVALID_PATH = 4;
-  const INVALID_SAMPLE_SIZE = 5;
+  const NO_SUCH_METHOD = (1<<1);
+  const INVALID_CATEGORY_KEY = (1<<2);
+  const INVALID_PATH = (1<<3);
+  const INVALID_SAMPLE_SIZE = (1<<4);
 
   /** @see Exceptable::INFO */
   const INFO = [
     self::NO_SUCH_METHOD => [
       'message' => 'no such method',
-      'tr_message' => 'no method "ArrayTools::{method}()" exists'
+      'tr_message' => 'no method "Arrays::{method}()" exists'
     ],
     self::INVALID_CATEGORY_KEY => [
       'message' => 'invalid category key',

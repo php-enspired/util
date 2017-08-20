@@ -22,7 +22,7 @@ namespace at\util;
 
 use at\util\ {
   JsonException,
-  VarTools
+  Vars
 };
 
 /**
@@ -80,11 +80,11 @@ class Json {
    */
   public static function decode(string $json, array $opts=[]) {
     $assoc = $opts[self::DECODE_ASSOC] ?? self::DEFAULT_ASSOC;
-    VarTools::typeHint('$opts[Json::DECODE_ASSOC]', $assoc, 'bool');
+    Vars::typeHint('$opts[Json::DECODE_ASSOC]', $assoc, 'bool');
     $options = $opts[self::DECODE_OPTIONS] ?? self::DEFAULT_DECODE_OPTIONS;
-    VarTools::typeHint('$opts[Json::DECODE_OPTIONS]', $options, 'int');
+    Vars::typeHint('$opts[Json::DECODE_OPTIONS]', $options, 'int');
     $depth = $opts[self::DECODE_DEPTH] ?? self::DEFAULT_DEPTH;
-    VarTools::typeHint('$opts[Json::DECODE_DEPTH]', $depth, 'int');
+    Vars::typeHint('$opts[Json::DECODE_DEPTH]', $depth, 'int');
 
     $value = json_decode($json, $assoc, $depth, $options);
     if (json_last_error() === JSON_ERROR_NONE) {
@@ -108,9 +108,9 @@ class Json {
    */
   public static function encode($data, array $opts): string {
     $options = $opts[self::ENCODE_OPTIONS] ?? self::DEFAULT_ENCODE_OPTIONS;
-    VarTools::typeHint('$opts[Json::ENCODE_OPTIONS]', $options, 'int');
+    Vars::typeHint('$opts[Json::ENCODE_OPTIONS]', $options, 'int');
     $depth = $opts[self::ENCODE_DEPTH] ?? self::DEFAULT_DEPTH;
-    VarTools::typeHint('$opts[Json::ENCODE_DEPTH]', $depth, 'int');
+    Vars::typeHint('$opts[Json::ENCODE_DEPTH]', $depth, 'int');
 
     $json = json_encode($data, $options, $depth);
     if (json_last_error() === JSON_ERROR_NONE) {

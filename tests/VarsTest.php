@@ -22,16 +22,16 @@ namespace at\util\tests;
 
 use PHPUnit\Framework\TestCase;
 
-class VarToolsTest extends TestCase {
+class VarsTest extends TestCase {
 
   /**
-   * @covers VarTools::debug
+   * @covers Vars::debug
    * @dataProvider _varProvider
    */
   public function testDebug(array $vars, $expected) {}
 
   /**
-   * @covers VarTools::filter
+   * @covers Vars::filter
    * @dataProvider _filterProvider
    */
   public function testFilter($value, $filter, $expected) {}

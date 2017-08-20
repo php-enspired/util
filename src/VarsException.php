@@ -23,9 +23,9 @@ namespace at\util;
 use at\exceptable\Exception as Exceptable;
 
 /**
- * error cases for VarTools methods.
+ * error cases for Vars methods.
  */
-class VarToolsException extends Exceptable {
+class VarsException extends Exceptable {
 
   /**
    * @type int NO_EXPRESSIONS
@@ -36,13 +36,13 @@ class VarToolsException extends Exceptable {
    * @type int BAD_CALL_RIPLEY
    * @type int INVALID_TIME_VALUE
    */
-  const NO_EXPRESSIONS = 2;
-  const INVALID_FILTER = 3;
-  const INVALID_CAST_TYPE = 4;
-  const UNCASTABLE = 5;
-  const INVALID_CAST_DEFAULT = 6;
-  const BAD_CALL_RIPLEY = 7;
-  const INVALID_TIME_VALUE = 8;
+  const NO_EXPRESSIONS = (1<<1);
+  const INVALID_FILTER = (1<<2);
+  const INVALID_CAST_TYPE = (1<<3);
+  const UNCASTABLE = (1<<4);
+  const INVALID_CAST_DEFAULT = (1<<5);
+  const BAD_CALL_RIPLEY = (1<<6);
+  const INVALID_TIME_VALUE = (1<<7);
 
   /** @see exceptableTrait::INFO */
   const INFO = [

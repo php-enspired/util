@@ -31,13 +31,13 @@ use at\exceptable\Handler;
 
 use at\util\ {
   DateTime,
-  VarToolsException
+  VarsException
 };
 
 /**
  * general variable handling utilities.
  */
-class VarTools {
+class Vars {
 
   /**
    * php data types and psuedotypes.
@@ -87,7 +87,7 @@ class VarTools {
    */
   public static function debug(...$expressions) {
     if (empty($expressions)) {
-      throw new VarToolsException(VarToolsException::NO_EXPRESSIONS);
+      throw new VarsException(VarsException::NO_EXPRESSIONS);
       $m = 'at least one $expression must be provided';
       throw new \BadMethodCallException($m, E_USER_WARNING);
     }
@@ -115,7 +115,7 @@ class VarTools {
    *    @type int   OPT_FLAGS    filter flags
    *    @type array OPT_OPTIONS  filter options
    *  }
-   * @throws VarToolsException  if a provided callback throws, or if filter definition is invalid
+   * @throws VarsException  if a provided callback throws, or if filter definition is invalid
    * @return mixed              the filtered variable on success; or null on failure
    */
   public static function filter($value, $filter = null, array $opts = []) {
@@ -170,7 +170,7 @@ class VarTools {
       $errorExceptions = (new Handler)->throw(E_ALL)->register();
       return filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
     } catch (\Throwable $e) {
-      throw new VarToolsException(VarToolsException::BAD_CALL_RIPLEY, $e);
+      throw new VarsException(VarsException::BAD_CALL_RIPLEY, $e);
     } finally {
       $errorExceptions->unregister();
     }

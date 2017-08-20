@@ -26,7 +26,7 @@ use DateTimeImmutable,
 use at\PRO\PRO;
 use at\util\ {
   ValidatorException,
-  VarTools
+  Vars
 };
 
 /**
@@ -176,14 +176,14 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function after($value, $compare) : bool {
-    $after = VarTools::filter($compare, VarTools::DATETIME);
+    $after = Vars::filter($compare, Vars::DATETIME);
     if (! $after) {
       throw new ValidatorException(
         ValidatorException::INVALID_TIME_VALUE,
         ['time' => $compare]
       );
     }
-    $value = VarTools::filter($value, VarTools::DATETIME);
+    $value = Vars::filter($value, Vars::DATETIME);
     return ($value !== null) ? self::greater($value, $after) : false;
   }
 
@@ -263,14 +263,14 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function before($value, $compare) : bool {
-    $before = VarTools::filter($compare, VarTools::DATETIME);
+    $before = Vars::filter($compare, Vars::DATETIME);
     if (! $before) {
       throw new ValidatorException(
         ValidatorException::INVALID_TIME_VALUE,
         ['time' => $compare]
       );
     }
-    $value = VarTools::filter($value, VarTools::DATETIME);
+    $value = Vars::filter($value, Vars::DATETIME);
     return ($value !== null) ? self::less($value, $before) : false;
   }
 
@@ -283,21 +283,21 @@ class Validator {
    * @return bool                    true if validation succeeds; false otherwise
    */
   public static function between($value, $min, $max) : bool {
-    VarTools::typeHint(
+    Vars::typeHint(
       'min',
       $min,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
-    VarTools::typeHint(
+    Vars::typeHint(
       'max',
       $max,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
 
     return $min < $value && $value < $max;
@@ -327,17 +327,17 @@ class Validator {
    * $return bool          true if validation succeeds; false otherwise
    */
   public static function collection($value, string $of = null) : bool {
-    if (! VarTools::isIterable($value)) {
+    if (! Vars::isIterable($value)) {
       return false;
     }
 
     if (empty($of)) {
       $first = reset($value);
-      $of = is_object($first) ? $first : VarTools::type($first);
+      $of = is_object($first) ? $first : Vars::type($first);
     }
 
     foreach ($value as $item) {
-      if (! ($item instanceof $of || VarTools::type($item) === $of)) {
+      if (! ($item instanceof $of || Vars::type($item) === $of)) {
         return false;
       }
     }
@@ -354,16 +354,16 @@ class Validator {
    * @return bool                                true if validation succeeds; false otherwise
    */
   public static function during($value, $start, $end) : bool {
-    $dtStart = VarTools::filter($start, VarTools::DATETIME);
+    $dtStart = Vars::filter($start, Vars::DATETIME);
     if (! $dtStart) {
       throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $start]);
     }
-    $dtEnd = VarTools::filter($end, VarTools::DATETIME);
+    $dtEnd = Vars::filter($end, Vars::DATETIME);
     if (! $dtEnd) {
       throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $end]);
     }
 
-    $value = VarTools::filter($value, VarTools::DATETIME);
+    $value = Vars::filter($value, Vars::DATETIME);
     return ($value !== null) ? self::from($value, $dtStart, $dtEnd) : false;
   }
 
@@ -435,21 +435,21 @@ class Validator {
    * @return bool                    true if validation succeeds; false otherwise
    */
   public static function from($value, $min, $max) : bool {
-    VarTools::typeHint(
+    Vars::typeHint(
       'min',
       $min,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
-    VarTools::typeHint(
+    Vars::typeHint(
       'max',
       $max,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
 
     return $min <= $value && $value <= $max;
@@ -463,13 +463,13 @@ class Validator {
    * @return bool                      true if validation succeeds; false otherwise
    */
   public static function greater($value, $compare) : bool {
-    VarTools::typeHint(
+    Vars::typeHint(
       'compare',
       $compare,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
 
     return $value > $compare;
@@ -493,7 +493,7 @@ class Validator {
     if (! is_bool($if)) {
       throw new ValidatorException(
         ValidatorException::INVALID_CONDITION,
-        ['if' => $if, 'type' => VarTools::type($if)]
+        ['if' => $if, 'type' => Vars::type($if)]
       );
     }
 
@@ -503,14 +503,14 @@ class Validator {
 
   /**
    * passes if value is not one of given (pseudo) types.
-   * @see VarTools::typeCheck()
+   * @see Vars::typeCheck()
    *
    * @param mixed  $value     the value to test
    * @param string ...$types  allowed type(s)
    * @return bool             true if validation succeeds; false otherwise
    */
   public static function isType($value, string ...$types) : bool {
-    return VarTools::typeCheck($value, ...$types);
+    return Vars::typeCheck($value, ...$types);
   }
 
   /**
@@ -521,13 +521,13 @@ class Validator {
    * @return bool                      true if validation succeeds; false otherwise
    */
   public static function less($value, $compare) : bool {
-    VarTools::typeHint(
+    Vars::typeHint(
       'compare',
       $compare,
       DateTimeInterface::class,
-      VarTools::INT,
-      VarTools::FLOAT,
-      VarTools::STRING
+      Vars::INT,
+      Vars::FLOAT,
+      Vars::STRING
     );
 
     return $value < $compare;
@@ -541,7 +541,7 @@ class Validator {
    * @return bool              true if validation succeeds; false otherwise
    */
   public static function matches($value, $regex) : bool {
-    VarTools::typeHint('regex', $regex, PRO::class, VarTools::STRING);
+    Vars::typeHint('regex', $regex, PRO::class, Vars::STRING);
 
     if (! is_string($value)) {
       return false;
@@ -613,14 +613,14 @@ class Validator {
 
   /**
    * passes if value matches none of the given values. comparison is strict.
-   * @see ArrayTools::contains()
+   * @see Arrays::contains()
    *
    * @param mixed $value    the value to test
    * @param array $compare  set of valid values
    * @return bool           true if validation succeeds; false otherwise
    */
   public static function oneOf($value, array $compare) : bool {
-    return ArrayTools::contains($value, $compare, true);
+    return Arrays::contains($value, $compare, true);
   }
 
   /**
@@ -641,7 +641,7 @@ class Validator {
     if (! is_bool($if)) {
       throw new ValidatorException(
         ValidatorException::INVALID_CONDITION,
-        ['if' => $if, 'type' => VarTools::type($if)]
+        ['if' => $if, 'type' => Vars::type($if)]
       );
     }
 
