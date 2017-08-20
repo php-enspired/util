@@ -7,9 +7,7 @@ Various PHP utility classes and interfaces/traits for general use.
 
 * ### ArrayTools
 
-Utility functions for arrays, such as `cetegorize()`, `dig()`, `extend()`, and `rekey()`.
-
-Also proxies many built-in php array functions, and removes the by-reference behavior found on the `*sort()` functions and some others.
+Utility functions for arrays; also proxies many built-in php array functions, and removes the by-reference behavior found on the `*sort()` functions and some others.
 
 * ### DateTimeable
 
@@ -17,11 +15,11 @@ Extends the `DateTime` classes to accept floats/integers as unix timestamps, wit
 
 * ### Json
 
-Wraps JSON functions with sensible defaults and exception-based error handling.  Extends the `jsonSerializable` interface with `toArray()` and `toJson()`.
+Wraps JSON functions with sensible defaults and exception-based error handling.
 
 * ### PDO
 
-Sets more secure default options for PDO, and provides convenience methods for preparing+executing a query in one step, and for dynamically generating parameter markers for an array of values.
+Sets more secure default options for PDO, and provides a few convenience methods.
 
 * ### Validator
 

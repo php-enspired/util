@@ -87,6 +87,7 @@ class Validator {
    * @type callable BEFORE      same as LESS, but treats value as a timestring.
    * @type callable BETWEEN     passes if min < value < max.
    * @type callable BYTELENGTH  same as NOT_FROM, but checks byte length of a string value.
+   * @type callable COLLECTION  passes if value is iterable, and all items are of the same type/class.
    * @type callable DURING      same as FROM, but treats value as a timestring.
    * @type callable EQUALS      passes if value is equal to test value.
    * @type callable FROM        passes if min <= value <= max.
@@ -103,6 +104,7 @@ class Validator {
   const BEFORE = [self::class, 'before'];
   const BETWEEN = [self::class, 'between'];
   const BYTELENGTH = [self::class, 'byteLength'];
+  const COLLECTION = [self::class, 'collection'];
   const DURING = [self::class, 'during'];
   const EQUALS = [self::class, 'equals'];
   const FROM = [self::class, 'from'];
@@ -315,6 +317,31 @@ class Validator {
       return self::from(strlen(strval($value)), $min, $max);
     }
     return false;
+  }
+
+  /**
+   * passes if value is iterable, and all items are of the same type or class/interface.
+   *
+   * @param mixed  $value  the value to test
+   * @param string $of     the collection type (inferred from first item if omitted)
+   * $return bool          true if validation succeeds; false otherwise
+   */
+  public static function collection($value, string $of = null) : bool {
+    if (! VarTools::isIterable($value)) {
+      return false;
+    }
+
+    if (empty($of)) {
+      $first = reset($value);
+      $of = is_object($first) ? $first : VarTools::type($first);
+    }
+
+    foreach ($value as $item) {
+      if (! ($item instanceof $of || VarTools::type($item) === $of)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

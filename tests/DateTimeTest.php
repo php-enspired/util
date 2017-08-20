@@ -21,21 +21,18 @@ declare(strict_types = 1);
 namespace at\util\tests;
 
 use DateTime as BaseDateTime,
-    DateTimeImmutable as BaseDateTimeImmutable,
+    DateTimeInterface,
     DateTimeZone;
 
-use at\util\ {
-  DateTime,
-  DateTimeImmutable
-};
+use at\util\DateTime;
 
 use PHPUnit\Framework\TestCase;
 
-class DateTimeableTest extends TestCase {
+class DateTimeTest extends TestCase {
 
   /**
-   * @covers DateTimeable::create
-   * @covers DateTimeable::__construct
+   * @covers DateTime::create
+   * @covers DateTime::__construct
    * @dataProvider _timeableProvider
    */
   public function testCreate(array $time, $expected) {
@@ -43,16 +40,38 @@ class DateTimeableTest extends TestCase {
     list($timeable, $timezone) = $time;
 
     $datetime = DateTime::create($timeable, $timezone);
-    $datetimeimmutable = DateTimeImmutable::create($timeable, $timezone);
-
-    $this->assertTrue($datetime instanceof BaseDateTime);
-    $this->assertTrue($datetimeimmutable instanceof BaseDateTimeImmutable);
-
+    $this->assertTrue($datetime instanceof DateTimeInterface);
     $this->assertEquals($expected, $datetime);
-    $this->assertEquals($expected, $datetimeimmutable);
   }
 
   /**
+   * @covers DateTime::createFromUnixtime
+   * @covers DateTime::__construct
+   * @dataProvider _unixtimeProvider
+   */
+  public function testCreateFromUnixtime($unixtime, $expected) {
+    $datetime = DateTime::createFromUnixtime($unixtime);
+    $this->assertTrue($datetime instanceof DateTimeInterface);
+    $this->assertEquals($expected, $datetime);
+  }
+
+  /**
+   * @covers DateTime::__toString
+   * @covers DateTime::setToStringFormat
+   */
+  public function testSetToStringFormat() {
+    $dt = new DateTime;
+
+    $this->assertEquals($dt->format(DateTime::ISO8601), strval($dt));
+
+    $dt->setToStringFormat(BaseDateTime::W3C);
+    $this->assertEquals($dt->format(BaseDateTime::W3C), strval($dt));
+  }
+
+  /**
+   * @todo fix intermittent failures due to invalid test examples
+   * (DateTime instances being created on different seconds)
+   *
    * @return array[] {
    *    @type array $0  {
    *      @type string|int|float $0  a datetimeable value
@@ -68,18 +87,18 @@ class DateTimeableTest extends TestCase {
     $tomorrow = 'tomorrow';
     $later = '28 July 2061';
 
-    $thenDT = new BaseDateTimeImmutable('20 July 1969');
-    $yesterdayDT = new DateTimeImmutable('yesterday');
-    $nowDT = new BaseDateTimeImmutable('now');
-    $tomorrowDT = new DateTimeImmutable('tomorrow');
-    $laterDT = new BaseDateTimeImmutable('28 July 2061');
+    $thenDT = new BaseDateTime('20 July 1969');
+    $yesterdayDT = new DateTime('yesterday');
+    $nowDT = new BaseDateTime('now');
+    $tomorrowDT = new DateTime('tomorrow');
+    $laterDT = new BaseDateTime('28 July 2061');
 
     $Z = new DateTimeZone('EST');
-    $thenDTZ = new BaseDateTimeImmutable('20 July 1969', $Z);
-    $yesterdayDTZ = new DateTimeImmutable('yesterday', $Z);
-    $nowDTZ = new BaseDateTimeImmutable('now', $Z);
-    $tomorrowDTZ = new DateTimeImmutable('tomorrow', $Z);
-    $laterDTZ = new BaseDateTimeImmutable('28 July 2061', $Z);
+    $thenDTZ = new BaseDateTime('20 July 1969', $Z);
+    $yesterdayDTZ = new DateTime('yesterday', $Z);
+    $nowDTZ = new BaseDateTime('now', $Z);
+    $tomorrowDTZ = new DateTime('tomorrow', $Z);
+    $laterDTZ = new BaseDateTime('28 July 2061', $Z);
 
     return [
       [[$then, null], $thenDT],
@@ -121,6 +140,27 @@ class DateTimeableTest extends TestCase {
       [[$later, $Z], $laterDTZ],
       [[intval($laterDTZ->format('U')), $Z], $laterDTZ],
       [[floatval($laterDTZ->format('U')), $Z], $laterDTZ]
+    ];
+  }
+
+  /**
+   * @return array[] {
+   *    @type mixed $0              unix timestamp as int, float, or string
+   *    @type DateTimeInterface $1  expected DateTime instance
+   *  }
+   */
+  public function _unixtimeProvider() : array {
+    $dtU = new BaseDateTime('@' . time());
+    $dtu = BaseDateTime::createFromFormat('U.u', (string) microtime(true));
+
+    return [
+      [$dtU->format('U'), $dtU],
+      [$dtU->format('U.u'), $dtU],
+      [intval($dtU->format('U.u')), $dtU],
+      [floatval($dtU->format('U.u')), $dtU],
+
+      [$dtu->format('U.u'), $dtu],
+      [floatval($dtu->format('U.u')), $dtu]
     ];
   }
 }

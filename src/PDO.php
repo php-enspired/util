@@ -29,7 +29,6 @@ use PDO as BasePDO,
  */
 class PDO extends BasePDO {
 
-
   /**
    * keys for tuple returned by arrayParam().
    *

@@ -191,6 +191,10 @@ class ArrayToolsTest extends TestCase {
    * @return array[]  test cases
    */
   public function _arrayFunctionProvider() : array {
+    $proxyFunctions = array_flip(
+      ArrayTools::ARRAY_FUNCTIONS + ArrayTools::ARRAY_REF_FUNCTIONS
+    );
+
     $tests = [];
     $simpleA = $this->_simpleArrayA;
     $simpleB = $this->_simpleArrayB;
@@ -202,65 +206,69 @@ class ArrayToolsTest extends TestCase {
     // array_* functions
 
     $arrays = [
-      'change_key_case' => [[$simpleA, CASE_LOWER], [$simpleA, CASE_UPPER]],
-      'chunk' => [[$simpleA, 1], [$simpleA, 1, true]],
-      'column' => [
+      'array_change_key_case' => [[$simpleA, CASE_LOWER], [$simpleA, CASE_UPPER]],
+      'array_chunk' => [[$simpleA, 1], [$simpleA, 1, true]],
+      'array_column' => [
         [$nestedA, key($nestedA)],
         [$nestedA, key($nestedA), key($nestedA)],
         [$nestedA, null, key($nestedA)]
       ],
-      'combine' => [[array_keys($simpleA), array_values($simpleA)]],
-      'count_values' => [[$simpleA]],
-      'diff_assoc' => [[$simpleAB, $simpleB]],
-      'diff_key' => [[$simpleAB, $simpleB]],
-      'diff_uassoc' => [[$simpleAB, $simpleB, $ucompare]],
-      'diff_ukey' => [[$simpleAB, $simpleB, $ucompare]],
-      'diff' => [[$simpleAB, $simpleB]],
-      'fill_keys' => [[array_keys($simpleA), reset($simpleA)]],
-      'fill' => [[1,2,3]],
-      'filter' => [
+      'array_combine' => [[array_keys($simpleA), array_values($simpleA)]],
+      'array_count_values' => [[$simpleA]],
+      'array_diff_assoc' => [[$simpleAB, $simpleB]],
+      'array_diff_key' => [[$simpleAB, $simpleB]],
+      'array_diff_uassoc' => [[$simpleAB, $simpleB, $ucompare]],
+      'array_diff_ukey' => [[$simpleAB, $simpleB, $ucompare]],
+      'array_diff' => [[$simpleAB, $simpleB]],
+      'array_fill_keys' => [[array_keys($simpleA), reset($simpleA)]],
+      'array_fill' => [[1,2,3]],
+      'array_filter' => [
         [$simpleA, function($v) { return $v !== 'a'; }],
         [$simpleA, function($k) { return $k !== 'a'; }, ARRAY_FILTER_USE_KEY],
         [$simpleA, function($v, $k) { return $k !== 'a'; }, ARRAY_FILTER_USE_BOTH]
       ],
-      'flip' => [[$simpleA]],
-      'intersect_assoc' => [[$simpleA, $simpleB]],
-      'intersect_key' => [[$simpleA, $simpleB]],
-      'intersect_uassoc' => [[$simpleA, $simpleB, $ucompare]],
-      'intersect_ukey' => [[$simpleA, $simpleB, $ucompare]],
-      'intersect' => [[$simpleA, $simpleB]],
-      'key_exists' => [[key($simpleA), $simpleA]],
-      'keys' => [[$simpleA]],
-      'map' => [[$ucompare, $simpleA]],
-      'merge_recursive' => [[$nestedA, $nestedB]],
-      'merge' => [[$simpleA, $simpleB]],
-      'pad' => [[$simpleA, 5, 'foo'], [$simpleA, -5, 'foo']],
-      'product' => [[[1, 2, 3]]],
-      'reduce' => [[$simpleA, function($c, $v) { return "{$c}:{$v}"; }]],
-      'replace_recursive' => [[$nestedA, $nestedB]],
-      'replace' => [[$simpleA, $simpleB]],
-      'reverse' => [[$simpleA]],
-      'search' => [[reset($simpleA), $simpleA], [reset($simpleA), $simpleA, true]],
-      'slice' => [
+      'array_flip' => [[$simpleA]],
+      'array_intersect_assoc' => [[$simpleA, $simpleB]],
+      'array_intersect_key' => [[$simpleA, $simpleB]],
+      'array_intersect_uassoc' => [[$simpleA, $simpleB, $ucompare]],
+      'array_intersect_ukey' => [[$simpleA, $simpleB, $ucompare]],
+      'array_intersect' => [[$simpleA, $simpleB]],
+      'array_key_exists' => [[key($simpleA), $simpleA]],
+      'array_keys' => [[$simpleA]],
+      'array_map' => [[$ucompare, $simpleA]],
+      'array_merge_recursive' => [[$nestedA, $nestedB]],
+      'array_merge' => [[$simpleA, $simpleB]],
+      'array_pad' => [[$simpleA, 5, 'foo'], [$simpleA, -5, 'foo']],
+      'array_product' => [[[1, 2, 3]]],
+      'array_reduce' => [[$simpleA, function($c, $v) { return "{$c}:{$v}"; }]],
+      'array_replace_recursive' => [[$nestedA, $nestedB]],
+      'array_replace' => [[$simpleA, $simpleB]],
+      'array_reverse' => [[$simpleA]],
+      'array_search' => [[reset($simpleA), $simpleA], [reset($simpleA), $simpleA, true]],
+      'array_slice' => [
         [$simpleA, 1],
         [$simpleA, 1, 1],
         [$simpleA, 1, -1],
         [$simpleA, 1, 1, true]
       ],
-      'sum' => [[[1, 2, 3]]],
-      'udiff_assoc' => [[$simpleA, $simpleB, $ucompare]],
-      'udiff_uassoc' => [[$simpleA, $simpleB, $ucompare, $ucompare]],
-      'udiff' => [[$simpleA, $simpleB, $ucompare]],
-      'uintersect_assoc' => [[$simpleA, $simpleB, $ucompare]],
-      'uintersect_uassoc' => [[$simpleA, $simpleB, $ucompare, $ucompare]],
-      'uintersect' => [[$simpleA, $simpleB, $ucompare]],
-      'unique' => [[[1, 1, 2, 3, 5, 5]]],
-      'values' => [[$simpleA]]
+      'array_sum' => [[[1, 2, 3]]],
+      'array_udiff_assoc' => [[$simpleA, $simpleB, $ucompare]],
+      'array_udiff_uassoc' => [[$simpleA, $simpleB, $ucompare, $ucompare]],
+      'array_udiff' => [[$simpleA, $simpleB, $ucompare]],
+      'array_uintersect_assoc' => [[$simpleA, $simpleB, $ucompare]],
+      'array_uintersect_uassoc' => [[$simpleA, $simpleB, $ucompare, $ucompare]],
+      'array_uintersect' => [[$simpleA, $simpleB, $ucompare]],
+      'array_unique' => [[[1, 1, 2, 3, 5, 5]]],
+      'array_values' => [[$simpleA]]
     ];
-    foreach ($arrays as $func => $cases) {
+    foreach ($arrays as $function => $cases) {
       foreach ($cases as $i => $args) {
-        $array_func = "array_{$func}";
-        $tests["{$func}:{$i}"] = [$func, $args, $array_func(...$args)];
+        $result = $function(...$args);
+        $tests["{$function}:{$i}"] = [$function, $args, $result];
+        $proxy = $proxyFunctions[$function] ?? null;
+        if ($proxy) {
+          $tests["{$proxy}:{$i}"] = [$proxy, $args, $result];
+        }
       }
     }
 

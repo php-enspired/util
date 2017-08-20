@@ -21,21 +21,26 @@ declare(strict_types = 1);
 namespace at\util;
 
 use InvalidArgumentException,
-    DateTime as BaseDateTime,
-    DateTimeImmutable as BaseDateTimeImmutable,
+    DateTimeImmutable,
     DateTimeInterface,
     DateTimeZone;
 
 /**
- * convenience methods for PHP's DateTime classes.
+ * decorates PHP's DateTime.
  */
-trait DateTimeable {
+class DateTime extends DateTimeImmutable {
+
+  /** @type string  there, fixed. */
+  const ISO8601 = DATE_ATOM;
+
+  /** @type string  format to use with __toString. */
+  protected $_toStringFormat;
 
   /**
    * convenience factory method.
-   * @see DateTimeable::__construct()
+   * @see DateTime::__construct()
    *
-   * @return DateTimeInterface  a new DateTimeInterface instance
+   * @return DateTimeInterface  a new DateTime instance
    */
   public static function create($time = null, $timezone = null) : DateTimeInterface {
     return new self($time, $timezone);
@@ -50,8 +55,7 @@ trait DateTimeable {
    */
   public static function createFromUnixtime($time) : DateTimeInterface {
     if (filter_var($time, FILTER_VALIDATE_FLOAT) === false) {
-      $t = is_string($time) ? "'{$time}'" : '(' . gettype($time) . ')';
-      throw new InvalidArgumentException("\$time must be a unix timestamp; {$t} provided");
+      throw new DateTimeException(DateTimeException::INVALID_UNIXTIME, ['time' => $time]);
     }
 
     return new self("@{$time}");
@@ -59,30 +63,51 @@ trait DateTimeable {
 
   /**
    * interprets integers/floats as unix timestamps (with microsecond support).
+   * UTC is assumed if no timezone or offset is specified.
    *
    * note that for compatibility reasons,
-   * _string_ representations of ints/floats are not interpreted as timestamps.
+   * _string_ representations of ints/floats are not interpreted as unix timestamps
+   * (use DateTime::createFromUnixtime() instead).
    *
-   * @param mixed $time      unix timestamp or datetime string
+   * @param mixed $time      unix timestamp (int|float) or datetime string
    * @param mixed $timezone  datetimezone string or instance
    */
-  public function __construct($time = null, $timezone = null) {
+  public function __construct($time = 'now', $timezone = null) {
     if (is_int($time) || is_float($time)) {
       $time = "@{$time}";
     }
     if (strpos($time, '@') === 0 && strpos($time, '.')) {
+      if (filter_var(substr($time, 1), FILTER_VALIDATE_FLOAT) === false) {
+        throw new DateTimeException(DateTimeException::INVALID_UNIXTIME, ['time' => $time]);
+      }
+
       list($U, $u) = explode('.', substr($time, 1));
-      $time = date('Y-m-d\TH:i:s', $U) . ".{$u}+0000";
+      $time = date('Y-m-d\TH:i:s', intval($U)) . ".{$u}+0000";
+    }
+
+    $timezone = $timezone ?? 'UTC';
+    if (is_string($timezone)) {
+      $timezone = new DateTimeZone($timezone);
     }
 
     parent::__construct($time, $timezone);
   }
-}
 
-class DateTime extends BaseDateTime {
-  use DateTimeable;
-}
+  /**
+   * defaults to (real) iso-8601 format for string representation.
+   */
+  public function __toString() {
+    return $this->format($this->_toStringFormat ?? self::ISO8601);
+  }
 
-class DateTimeImmutable extends BaseDateTimeImmutable {
-  use DateTimeable;
+  /**
+   * sets the format used by __toString().
+   *
+   * @param string $format  the format to use
+   * @return $this
+   */
+  public function setToStringFormat(string $format) : DateTimeInterface {
+    $this->_toStringFormat = $format;
+    return $this;
+  }
 }

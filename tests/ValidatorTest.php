@@ -150,7 +150,6 @@ class ValidatorTest extends TestCase {
   }
 
   /**
-   * @todo
    * @covers Validator::byteLength
    */
   public function testByteLength() {
@@ -160,7 +159,15 @@ class ValidatorTest extends TestCase {
     $this->assertTrue(Validator::byteLength('foo', $min, $max));
     $this->assertFalse(Validator::byteLength('bazinga', $min, $max));
     $this->assertTrue(Validator::byteLength(101, $min, $max));
-    $this->assertFalse(Validator::byteLength(1000000, $min, $max));
+    $this->assertFalse(Validator::byteLength(3, $min, $max));
+  }
+
+  /**
+   * @covers Validator::collection
+   * @dataProvider _collectionProvider
+   */
+  public function testCollection($value, $of, bool $expected) {
+    $this->assertEquals(Validator::collection($value, $of), $expected);
   }
 
   /**
@@ -243,6 +250,38 @@ class ValidatorTest extends TestCase {
     $this->assertFalse(Validator::never(reset($values)));
   }
 
+
+  /**
+   * @return array[] {
+   *    @type mixed       $0  value to test
+   *    @type string|null $1  the collection type to test against
+   *    @type bool        $2  is the value a valid collection?
+   *  }
+   */
+  public function _collectionProvider() : array {
+    $A = new A;
+    $AA = new AA;
+    $IA = new IA;
+    $IAA = new IAA;
+
+    return [
+      [[1, 2, 3, 4], 'integer', true],
+      [[1, 2, 3, 4], null, true],
+      [[1, 2, 3, 'z'], 'integer', false],
+      [[1, 2, 3, 'z'], null, false],
+      [[true, false], 'boolean', true],
+      [[true, false], null, true],
+      [[true, false, null], null, false],
+      [[$A, $AA], A::class, true],
+      [[$A, $AA], null, true],
+      [[$IA, $IAA], I::class, true],
+      [[$IA, $IAA], null, true],
+      [[$A, $IAA], I::class, false],
+      [[$A, $IAA], null, true],
+      [new \stdClass, null, false],
+      ['foo', null, false]
+    ];
+  }
 
   /**
    * @return array[] {
@@ -397,4 +436,25 @@ class ValidatorTest extends TestCase {
       [[$pass, $pass, $pass, $pass], 4]
     ];
   }
+}
+
+// stubs for test cases
+if (! class_exists(A::class)) {
+  class A {}
+}
+
+if (! class_exists(AA::class)) {
+  class AA extends A {}
+}
+
+if (! interface_exists(I::class)) {
+  interface I {}
+}
+
+if (! class_exists(IA::class)) {
+  class IA extends A implements I {}
+}
+
+if (! class_exists(IAA::class)) {
+  class IAA extends IA {}
 }
