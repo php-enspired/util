@@ -20,38 +20,107 @@ declare(strict_types = 1);
 
 namespace at\util\tests;
 
+use DateTimeInterface,
+    Throwable;
+
 use PHPUnit\Framework\TestCase;
+
+use at\util\ {
+  DateTime,
+  Vars,
+  VarsException
+};
 
 class VarsTest extends TestCase {
 
   /**
-   * @covers Vars::debug
-   * @dataProvider _varProvider
+   * convenience function for setting exception expectations.
+   *
+   * @param string|Throwable $exception  the exception to expect
    */
-  public function testDebug(array $vars, $expected) {}
+  public function expectException($exception) {
+    $instance = $exception instanceof Throwable;
+    parent::expectException($instance ? get_class($exception) : $exception);
+    if (! $instance) { return; }
+
+    $code = $exception->getCode();
+    if ($code) {
+      $this->expectExceptionCode($code);
+    }
+
+    $message = $exception->getMessage();
+    if ($message) {
+      $this->expectExceptionMessage($message);
+    }
+  }
+
+  /**
+   * @covers Vars::isDateTimeable
+   * @covers Vars::toDateTime
+   * @dataProvider _dateTimeableProvider
+   */
+  public function testDateTime($datetimeable, $expected) {
+    $isDateTimeable = $expected instanceof DateTimeInterface;
+    if (! $isDateTimeable) {
+      $this->expectException($expected);
+    }
+
+    $this->assertEquals($isDateTimeable, Vars::isDateTimeable($datetimeable));
+    $this->assertEquals($expected, Vars::toDateTime($datetimeable));
+  }
+
+  /**
+   * @covers Vars::debug
+   */
+  public function testDebug() {
+    $this->assertEquals("string(3) \"foo\"\n", Vars::debug('foo'));
+    $this->assertEquals("string(3) \"foo\"\nint(42)\n", Vars::debug('foo', 42));
+
+    $this->expectException(new VarsException(VarsException::NO_EXPRESSIONS));
+    Vars::debug();
+  }
 
   /**
    * @covers Vars::filter
    * @dataProvider _filterProvider
    */
-  public function testFilter($value, $filter, $expected) {}
+  public function testFilter(array $args, $expected = null) {
+    if ($expected instanceof Throwable) {
+      $this->expectException($expected);
+    }
 
-  /**
-   *
-   */
-  public function _varProvider() : array {
-
-    // @todo
-    $this->markTestIncomplete('not yet implemented');
-    return [[]];
-
+    $this->assertEquals($expected, Vars::filter(...$args));
   }
 
   /**
    * @return array[] {
-   *    @type mixed $0  a value to filter
-   *    @type mixed $1  the filter to apply
-   *    @type mixed $2  the expected result
+   *    @type mixed                  $0  a value
+   *    @type DateTime|VarsException $1  the expected result
+   *  }
+   */
+  public function _dateTimeableProvider() : array {
+    $midnight = new DateTime('midnight');
+    // we're not testing DateTime; only the behavior of toDateTime().
+    // limiting to a few representative cases is fine.
+    return [
+      ['midnight', $midnight],
+      [$midnight, $midnight],
+      [(int) $midnight->format('U'), $midnight],
+      [(float) $midnight->format('U.u'), $midnight],
+      [
+        'train wreck',
+        new VarsException(
+          VarsException::UNCASTABLE,
+          ['value' => 'train wreck', 'type' => 'DateTime']
+        )
+      ]
+    ];
+  }
+
+  /**
+   * @return array[] {
+   *    @type mixed $0  args to pass to filter()
+   *    @type mixed $1  the expected result
    *  }
    */
   public function _filterProvider() : array {

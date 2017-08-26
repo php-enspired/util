@@ -20,8 +20,7 @@ declare(strict_types = 1);
 
 namespace at\util;
 
-use InvalidArgumentException,
-    DateTimeImmutable,
+use DateTimeImmutable,
     DateTimeInterface,
     DateTimeZone;
 
@@ -49,9 +48,9 @@ class DateTime extends DateTimeImmutable {
   /**
    * creates a datetime instance from a unix timestamp.
    *
-   * @param mixed $time                a unix timestamp, as an integer, float, or string
-   * @throws InvalidArgumentException  if time value cannot be interpreted as a unix timestamp
-   * @return DateTimeInterface         a new DateTimeInterface instance
+   * @param mixed $time         a unix timestamp, as an integer, float, or string
+   * @throws DateTimeException  if time value cannot be interpreted as a unix timestamp
+   * @return DateTimeInterface  a new DateTimeInterface instance
    */
   public static function createFromUnixtime($time) : DateTimeInterface {
     if (filter_var($time, FILTER_VALIDATE_FLOAT) === false) {

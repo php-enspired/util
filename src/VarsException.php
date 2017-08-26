@@ -30,17 +30,13 @@ class VarsException extends Exceptable {
   /**
    * @type int NO_EXPRESSIONS
    * @type int INVALID_FILTER
-   * @type int INVALID_CAST_TYPE
    * @type int UNCASTABLE
-   * @type int INVALID_CAST_DEFAULT
    * @type int BAD_CALL_RIPLEY
    * @type int INVALID_TIME_VALUE
    */
   const NO_EXPRESSIONS = (1<<1);
   const INVALID_FILTER = (1<<2);
-  const INVALID_CAST_TYPE = (1<<3);
   const UNCASTABLE = (1<<4);
-  const INVALID_CAST_DEFAULT = (1<<5);
   const BAD_CALL_RIPLEY = (1<<6);
   const INVALID_TIME_VALUE = (1<<7);
 
@@ -54,20 +50,10 @@ class VarsException extends Exceptable {
       'severity' => Exceptable::WARNING,
       'tr_message' => 'invalid filter definition: {definition}'
     ],
-    self::INVALID_CAST_TYPE => [
-      'message' => 'invalid cast type',
-      'severity' => Exceptable::WARNING,
-      'tr_message' => '$type must be a valid php (pseudo)type; "{type}" provided'
-    ],
     self::UNCASTABLE => [
       'message' => 'uncastable value',
       'severity' => Exceptable::WARNING,
       'tr_message' => 'value of type "{value}" cannot be cast to {type}'
-    ],
-    self::INVALID_CAST_DEFAULT => [
-      'message' => 'invalid cast default',
-      'severity' => Exceptable::WARNING,
-      'tr_message' => 'default value must be {type}; {default} provided'
     ],
     self::BAD_CALL_RIPLEY => [
       'message' => 'error invoking callable',
