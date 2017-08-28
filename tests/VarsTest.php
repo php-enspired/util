@@ -20,7 +20,10 @@ declare(strict_types = 1);
 
 namespace at\util\tests;
 
-use DateTimeInterface,
+use ArrayObject,
+    DateTimeInterface,
+    JsonSerializable,
+    stdClass,
     Throwable;
 
 use PHPUnit\Framework\TestCase;
@@ -93,6 +96,25 @@ class VarsTest extends TestCase {
   }
 
   /**
+   * @covers Vars::isIterable
+   */
+  public function testIsIterable() {
+    $this->assertTrue(Vars::isIterable(new ArrayObject));
+    $this->assertTrue(Vars::isIterable([]));
+
+    $this->assertFalse(Vars::isIterable(7));
+    $this->assertFalse(Vars::isIterable('abc'));
+  }
+
+  /**
+   * @covers Vars::isJsonable
+   * @dataProvider _jsonableProvider
+   */
+  public function testIsJsonable($jsonable, bool $expected) {
+    $this->assertEquals($expected, Vars::isJsonable($jsonable));
+  }
+
+  /**
    * @return array[] {
    *    @type mixed                  $0  a value
    *    @type DateTime|VarsException $1  the expected result
@@ -100,13 +122,15 @@ class VarsTest extends TestCase {
    */
   public function _dateTimeableProvider() : array {
     $midnight = new DateTime('midnight');
-    // we're not testing DateTime; only the behavior of toDateTime().
+    // we're not testing DateTime; only the behavior of is|toDateTime().
     // limiting to a few representative cases is fine.
     return [
       ['midnight', $midnight],
       [$midnight, $midnight],
       [(int) $midnight->format('U'), $midnight],
       [(float) $midnight->format('U.u'), $midnight],
+      [$midnight->format('@U.u'), $midnight],
+
       [
         'train wreck',
         new VarsException(
@@ -154,4 +178,24 @@ class VarsTest extends TestCase {
     ];
   }
 
+  public function _jsonableProvider() : array {
+    return [
+      [[], true],
+      [[1, 2, 3], true],
+      [['a' => 1, 'b' =>2, 'c' => 3], true],
+      [true, true],
+      [false, true],
+      [null, true],
+      [new stdClass, true],
+      [
+        new class implements JsonSerializable {
+          public function jsonSerialize() { return []; }
+        },
+        true
+      ],
+
+      [new ArrayObject, false],
+      [fopen('php://memory', 'r'), false]
+    ];
+  }
 }

@@ -76,11 +76,20 @@ class Vars {
   const TYPE_TR = ['double' => self::INT, 'NULL' => self::NULL];
 
   /**
-   * @type int   OPT_FLAGS    "flags" key for filter() $opts tuple
-   * @type array OPT_OPTIONS  "options" key for filter() $opts tuple
+   * @type int    COERCE_ARRAY   filter flag: coerce filter value to array.
+   * @type int    REQUIRE_ARRAY  filter flag: require filter value to be an array.
+   *
+   * @type string OPT_DEFAULT    filter option key: default value.
+   * @type string OPT_MIN        filter option key: minimum integer value.
+   * @type string OPT_MAX        filter option key: maximum integer value.
+   * @type string OPT_REGEX      filter option key: regular expression.
    */
-  const OPT_FLAGS = 0;
-  const OPT_OPTIONS = 1;
+  const COERCE_ARRAY = FILTER_FORCE_ARRAY;
+  const REQUIRE_ARRAY = FILTER_REQUIRE_ARRAY;
+  const OPT_DEFAULT = 'default';
+  const OPT_MIN = 'min_range';
+  const OPT_MAX = 'max_range';
+  const OPT_REGEX = 'regex';
 
 
   /**
@@ -108,7 +117,7 @@ class Vars {
    * - Vars::{(pseudo)type} constants: will filter for given type
    * - fully qualified classnames: will filter for given class
    *
-   * will require a scalar value unless FILTER_FORCE|REQUIRE_ARRAY flags are set.
+   * will require a scalar value unless COERCE|REQUIRE_ARRAY flags are set.
    *
    * @param mixed $value    the value to filter
    * @param mixed $filter   the filter to apply
@@ -117,56 +126,56 @@ class Vars {
    * @throws VarsException  if filter definition is invalid, or if a callback throws
    * @return mixed|null     the filtered value on success; or null on failure
    */
-  public static function filter($value, $filter, int $flags = 0, array $options = []) {
-    // parse filter definition
-    $filter = [
-      self::BOOL => FILTER_VALIDATE_BOOLEAN,
-      self::FLOAT => FILTER_VALIDATE_FLOAT,
-      self::INT => FILTER_VALIDATE_INT
-    ][$filter] ?? $filter;
-
-    if (is_callable($filter)) {
-      $options = $filter;
-      $filter = FILTER_CALLBACK;
-    } elseif (self::isRegex($filter)) {
-      if ($filter instanceof PRO) {
-        $filter = $filter->__toString();
-      }
-      $options['regex'] = $filter;
-      $filter = FILTER_VALIDATE_REGEXP;
-    } elseif (is_string($filter)) {
-      $filter = function ($value) use ($filter) {
-        if (! Vars::typeCheck($value, $filter)) {
-          return null;
-        }
-        return (method_exists(Vars::class, "to{$filter}")) ?
-          Vars::{"to{$filter}"}($value) :
-          $value;
-      };
-    }
-
-    // pre-filter for array vs. scalar constraints
-    if (($flags & FILTER_REQUIRE_ARRAY === FILTER_REQUIRE_ARRAY) && ! is_array($value)) {
-      return is_array($options[self::OPT_DEFAULT] ?? null) ?
-        $options[self::OPT_DEFAULT] :
-        null;
-    }
-    if (($flags & FILTER_FORCE_ARRAY === FILTER_FORCE_ARRAY) && ! is_array($value)) {
-      $value = ($value === null) ? [] : [$value];
-    } else {
-      $flags |= FILTER_REQUIRE_SCALAR;
-    }
-
-    // run
-    try {
-      $errorExceptions = (new Handler)->throw(E_ALL)->register();
-      return filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
-    } catch (\Throwable $e) {
-      throw new VarsException(VarsException::BAD_CALL_RIPLEY, $e);
-    } finally {
-      $errorExceptions->unregister();
-    }
-  }
+  //public static function filter($value, $filter, int $flags = 0, array $options = []) {
+  //  // parse filter definition
+  //  $filter = [
+  //    self::BOOL => FILTER_VALIDATE_BOOLEAN,
+  //    self::FLOAT => FILTER_VALIDATE_FLOAT,
+  //    self::INT => FILTER_VALIDATE_INT
+  //  ][$filter] ?? $filter;
+  //
+  //  if (is_callable($filter)) {
+  //    $options = $filter;
+  //    $filter = FILTER_CALLBACK;
+  //  } elseif (self::isRegex($filter)) {
+  //    if ($filter instanceof PRO) {
+  //      $filter = $filter->__toString();
+  //    }
+  //    $options[self::OPT_REGEX] = $filter;
+  //    $filter = FILTER_VALIDATE_REGEXP;
+  //  } elseif (is_string($filter)) {
+  //    $filter = function ($value) use ($filter) {
+  //      if (! Vars::typeCheck($value, $filter)) {
+  //        return null;
+  //      }
+  //      return (method_exists(Vars::class, "to{$filter}")) ?
+  //        Vars::{"to{$filter}"}($value) :
+  //        $value;
+  //    };
+  //  }
+  //
+  //  // pre-filter for array vs. scalar constraints
+  //  if (($flags & FILTER_REQUIRE_ARRAY === FILTER_REQUIRE_ARRAY) && ! is_array($value)) {
+  //    return is_array($options[self::OPT_DEFAULT] ?? null) ?
+  //      $options[self::OPT_DEFAULT] :
+  //      null;
+  //  }
+  //  if (($flags & FILTER_FORCE_ARRAY === FILTER_FORCE_ARRAY) && ! is_array($value)) {
+  //    $value = ($value === null) ? [] : [$value];
+  //  } else {
+  //    $flags |= FILTER_REQUIRE_SCALAR;
+  //  }
+  //
+  //  // run
+  //  try {
+  //    $errorExceptions = (new Handler)->throw(E_ALL)->register();
+  //    return filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
+  //  } catch (\Throwable $e) {
+  //    throw new VarsException(VarsException::BAD_CALL_RIPLEY, $e);
+  //  } finally {
+  //    $errorExceptions->unregister();
+  //  }
+  //}
 
   /**
    * checks whether a variable is a datetime value.
@@ -217,79 +226,6 @@ class Vars {
    */
   public static function isRegex($var) : bool {
     return $var instanceof PRO || (@preg_match($var, '') !== false);
-  }
-
-  /**
-   * coerces iterable values to array.
-   *
-   * @param mixed $iterable  an iterable or scalar value
-   * @throws VarsException   if value cannot be cast to Array
-   * @return array           the value as an array
-   */
-  public static function toArray($iterable) : array {
-    if (is_array($iterable)) {
-      return $iterable;
-    }
-    if (self::isIterable($iterable)) {
-      return iterator_to_array($iterable);
-    }
-    if (is_scalar($iterable)) {
-      return [$iterable];
-    }
-
-    throw new VarsException(
-      VarsException::UNCASTABLE,
-      ['value' => $iterable, 'type' => 'array']
-    );
-  }
-
-  /**
-   * coerces DateTimeable values to DateTime.
-   *
-   * @param mixed $datetimeable  a datetimeable value
-   * @throws VarsException       if value cannot be cast to DateTime
-   * @return DateTime            the value as a DateTime instance
-   */
-  public static function toDateTime($datetimeable) : DateTimeInterface {
-    try {
-      return ($datetimeable instanceof DateTimeInterface) ?
-        $datetimeable :
-        new DateTime($datetimeable);
-    } catch (Throwable $e) {
-      throw new VarsException(
-        VarsException::UNCASTABLE,
-        $e,
-        ['value' => $datetimeable, 'type' => 'DateTime']
-      );
-    }
-  }
-
-  /**
-   * coerces stringable values to string.
-   *
-   * @param mixed $stringable  a stringable value
-   * @throws VarsException     if value cannot be cast to string
-   * @return string            the value as a string
-   */
-  public static function toString($stringable) : string {
-    switch (self::type($stringable)) {
-      case self::OBJECT:
-        if (! method_exists($stringable, '__toString')) {
-          break;
-        }
-      case self::FLOAT:
-      case self::INT:
-      case self::STRING:
-        return (string) $stringable;
-      case self::BOOL:
-      case self::NULL:
-        return json_encode($stringable);
-    }
-
-    throw new VarsException(
-      VarsException::UNCASTABLE,
-      ['value' => $stringable, 'type' => 'string']
-    );
   }
 
   /**
