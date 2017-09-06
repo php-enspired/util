@@ -59,17 +59,10 @@ class VarsTest extends TestCase {
 
   /**
    * @covers Vars::isDateTimeable
-   * @covers Vars::toDateTime
    * @dataProvider _dateTimeableProvider
    */
   public function testDateTime($datetimeable, $expected) {
-    $isDateTimeable = $expected instanceof DateTimeInterface;
-    if (! $isDateTimeable) {
-      $this->expectException($expected);
-    }
-
-    $this->assertEquals($isDateTimeable, Vars::isDateTimeable($datetimeable));
-    $this->assertEquals($expected, Vars::toDateTime($datetimeable));
+    $this->assertEquals($expected, Vars::isDateTimeable($datetimeable));
   }
 
   /**
@@ -116,8 +109,8 @@ class VarsTest extends TestCase {
 
   /**
    * @return array[] {
-   *    @type mixed                  $0  a value
-   *    @type DateTime|VarsException $1  the expected result
+   *    @type mixed  $0  a value
+   *    @type bool   $1  the expected result
    *  }
    */
   public function _dateTimeableProvider() : array {
@@ -125,19 +118,14 @@ class VarsTest extends TestCase {
     // we're not testing DateTime; only the behavior of is|toDateTime().
     // limiting to a few representative cases is fine.
     return [
-      ['midnight', $midnight],
-      [$midnight, $midnight],
-      [(int) $midnight->format('U'), $midnight],
-      [(float) $midnight->format('U.u'), $midnight],
-      [$midnight->format('@U.u'), $midnight],
+      ['midnight', true],
+      [$midnight, true],
+      [(int) $midnight->format('U'), true],
+      [(float) $midnight->format('U.u'), true],
+      [$midnight->format('@U.u'), true],
 
-      [
-        'train wreck',
-        new VarsException(
-          VarsException::UNCASTABLE,
-          ['value' => 'train wreck', 'type' => 'DateTime']
-        )
-      ]
+      ['train wreck', false],
+      [[], false]
     ];
   }
 

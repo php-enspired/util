@@ -33,10 +33,31 @@ use at\util\ {
 
 /**
  * wraps filter functions with a streamlined api and better defaults.
+ *
+ * like the native filter_* functions, values are treated as [arrays of] strings.
+ * passing objects will NOT work as expected.
  */
 class Filter {
 
+  /** @type string OPT_DEFAULT  filter option key: default value. */
+  const OPT_DEFAULT = 'default';
+
   /**
+   * flags and options for Filter::INT.
+   *
+   * @type int    HEX      filter flag: permits integers in hex format.
+   * @type int    OCTAL    filter flag: permits integers in octal format.
+   * @type string OPT_MIN  filter option key: minimum integer value.
+   * @type string OPT_MAX  filter option key: maximum integer value.
+   */
+  const HEX = FILTER_FLAG_ALLOW_HEX;
+  const OCTAL = FILTER_FLAG_ALLOW_OCTAL;
+  const OPT_MIN = 'min_range';
+  const OPT_MAX = 'max_range';
+
+  /**
+   * flags for array behavior.
+   *
    * @type int COERCE_ARRAY   filter flag: coerce filter value to array.
    * @type int REQUIRE_ARRAY  filter flag: require filter value to be an array.
    */
@@ -44,126 +65,75 @@ class Filter {
   const REQUIRE_ARRAY = FILTER_REQUIRE_ARRAY;
 
   /**
-   * @type string OPT_ADD_MISSING   filter option key: add keys not present in values?
-   * @type string OPT_DEFAULT       filter option key: default value.
-   * @type string OPT_MIN           filter option key: minimum integer value.
-   * @type string OPT_MAX           filter option key: maximum integer value.
-   * @type string OPT_OMIT_EMPTY    filter option key: remove empty values from filtered arrays?
-   * @type string OPT_OMIT_MISSING  filter option key: omit keys not present in filters?
-   * @type string OPT_OMIT_NULL     filter option key: remove null values from filtered arrays?
-   * @type string OPT_REGEX         filter option key: regular expression.
-   * @type string OPT_THROW         filter_option_key: throw on failure.
+   * flags for filtering results/resultsets.
+   *
+   * @type int    NULL_EMPTY_RESULT  convert empty values to null.
+   * @type int    THROW_ON_FAILURE   throw if a null value is encountered.
+   * @type int    OMIT_ON_FAILURE    omit null values from results (applies only to arrays).
    */
-  const OPT_ADD_MISSING = 'add_missing';
-  const OPT_DEFAULT = 'default';
-  const OPT_MIN = 'min_range';
-  const OPT_MAX = 'max_range';
-  const OPT_OMIT_EMPTY = 'omit_empty';
-  const OPT_OMIT_MISSING = 'omit_missing';
-  const OPT_OMIT_NULL = 'omit_null';
+  const NULL_EMPTY_RESULT = 1;
+  const THROW_ON_FAILURE = (1<<1);
+  const OMIT_ON_FAILURE = (1<<2);
+
+  /**
+   * options for handling missing values in Filter::map().
+   *
+   * @type string OPT_MISSING   filter option key: handling for missing keys when mapping.
+   * @type int    ADD_MISSING   add keys present in filter but missing from values.
+   * @type int    OMIT_MISSING  omit keys present in values but missing from filters.
+   */
+  const OPT_MISSING = 'missing';
+  const ADD_MISSING = 1;
+  const OMIT_MISSING = (1<<1);
+
+  /** @type string OPT_REGEX  filter option key: regular expression. */
   const OPT_REGEX = 'regex';
-  const OPT_THROW = 'throw';
+
+  /**
+   * array keys for filter_var() $flags.
+   *
+   * @type string FLAGS  filter flags
+   * @type string OPTS   filter options
+   */
+  const FLAGS = 'flags';
+  const OPTS = 'options';
 
   /**
    * filter shorthands as aliases or [filter, base flags, base options] tuples.
    *
-   * @type array BOOL      aliases FILTER_VALIDATE_BOOLEAN.
-   * @type array DATETIME  validates value as date/time and returns DateTime on success.
-   * @type array FLOAT     aliases FILTER_VALIDATE_FLOAT
-   * @type array INT       aliases FILTER_VALIDATE_INT
-   * @type array SERIAL    validates value as non-negative integer; converts to int on success.
-   * @type array STRING    validates value as string-able; converts to string on success.
+   * @type int      BOOL      aliases FILTER_VALIDATE_BOOLEAN.
+   * @type callable DATETIME  validates value as date/time and returns DateTime on success.
+   * @type callable EMAIL     uses FILTER_VALIDATE_EMAIL, but allows for IDNs.
+   * @type int      FLOAT     aliases FILTER_VALIDATE_FLOAT
+   * @type int      INT       aliases FILTER_VALIDATE_INT
+   * @type int      IP        aliases FILTER_VALIDATE_IP
+   * @type array    SERIAL    validates value as non-negative integer; converts to int on success.
+   * @type callable STRING    validates value as string-able; converts to string on success.
    */
   const BOOL = FILTER_VALIDATE_BOOLEAN;
-  const DATETIME = [__CLASS_, 'validateDateTime'];
+  const DATETIME = [__CLASS__, '_validateDateTime'];
+  const EMAIL = [__CLASS__, '_validateEmail'];
   const FLOAT = FILTER_VALIDATE_FLOAT;
   const INT = FILTER_VALIDATE_INT;
+  const IP = FILTER_VALIDATE_IP;
   const SERIAL = [FILTER_VALIDATE_INT, 0, [self::OPT_MIN => 0]];
-  const STRING = [__CLASS__, 'validateString'];
+  const STRING = [__CLASS__, '_validateString'];
 
 
   /**
-   * applies a filter to a value.
+   * maps multiple values to multiple filters.
    *
-   * accepts:
-   * - built-in php filters: @see http://php.net/filter_var
-   * - callables: will use FILTER_CALLBACK
-   * - Filter::{alias} constants: will filter for given type
-   * - regular expressions or PRO instances: will use FILTER_VALIDATE_REGEX
-   * - Vars::{(pseudo)type} constants: will filter for given type
-   *    (note; strict type comparison and no casting)
-   * - fully qualified classnames: will filter for given class
+   * the default behavior is to return values without a matching filter as-is.
+   * this can be changed using the OPT_MISSING option:
+   *  - ADD_MISSING adds (null) values where a filter has no matching value
+   *  - OMIT_MISSING excludes values that do not have matching filters
    *
-   * will require a scalar value unless COERCE|REQUIRE_ARRAY flags are set.
-   *
-   * @param mixed $value    the value to filter
-   * @param mixed $filter   the filter to apply
-   * @param int   $flags    filter flags
-   * @param array $options  filter options
-   * @throws VarsException  if filter definition is invalid, or if a callback throws
-   * @return mixed|null     the filtered value on success; or null on failure
-   */
-  public static function apply($value, $filter, int $flags = 0, array $options = []) {
-    // prep args
-    list($filter, $flags, $options) = self::_prep($filter, $flags, $options);
-
-    // pre-filter for array vs. scalar constraints
-    if (($flags & self::REQUIRE_ARRAY === self::REQUIRE_ARRAY) && ! is_array($value)) {
-      return is_array($options[self::OPT_DEFAULT] ?? null) ?
-        $options[self::OPT_DEFAULT] :
-        null;
-    }
-    if (($flags & self::FORCE_ARRAY === self::FORCE_ARRAY) && ! is_array($value)) {
-      $value = ($value === null) ? [] : [$value];
-    } else {
-      $flags |= self::REQUIRE_SCALAR;
-    }
-
-    // run filter
-    try {
-      $errorExceptions = (new Handler)->throw(E_ALL)->register();
-      $filtered = filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
-    } catch (\Throwable $e) {
-      throw new FilterException(FilterException::BAD_CALL_RIPLEY, $e);
-    } finally {
-      $errorExceptions->unregister();
-    }
-
-    // apply post-filter options
-    if (is_array($filtered)) {
-      $n = array_search(null, $filtered);
-      if ($n !== false && ($options[self::OPT_THROW] ?? false)) {
-        throw new FilterException(
-          FilterException::INVALID_FILTER,
-          ['filter' => $filter, 'value' => $value[$n]]
-        );
-      }
-      if ($options[self::OPT_OMIT_NULL] ?? false) {
-        return array_filter($filtered, function ($value) { return $value !== null; });
-      }
-      if ($options[self::OPT_OMIT_EMPTY] ?? false) {
-        return array_filter($filtered);
-      }
-      return $filtered;
-    }
-
-    if ($filtered === null && ($options[self::OPT_THROW] ?? false)) {
-      throw new FilterException(
-        FilterException::INVALID_FILTER,
-        ['filter' => $filter, 'value' => $value]
-      );
-    }
-    return $filtered;
-  }
-
-  /**
-   * applies a map of filters to multiple values.
-   *
-   * @param array $values       key:value pairs to filter
-   * @param array $filter       key:filter pairs to apply
-   * @param int   $baseFlags    base filter flags (applied to all filters)
-   * @param array $baseOptions  base filter options (applied to all filters)
-   * @return array              the filtered values
+   * @param mixed $values     map of values to filter
+   * @param mixed $filter     map of filters to apply (@see Filter::value() $filter)
+   * @param int   $baseFlags  bitmask of base filter flags (applied to all filters)
+   * @param array $baseOpts   map of base filter options (applied to all filters)
+   * @throws FilterException  if any filter is invalid
+   * @return array            the filtered values
    */
   public static function map(
     array $values,
@@ -171,153 +141,205 @@ class Filter {
     int $baseFlags = 0,
     array $baseOptions = []
   ) : array {
-    $keys = array_keys($values);
-    if ($baseOptions[self::OPT_ADD_MISSING] ?? false) {
-      $keys = array_merge($keys, array_keys($filters));
-    }
-    if ($baseOptions[self::OPT_OMIT_MISSING] ?? false) {
-      $keys = array_intersect($keys, array_keys($filters));
-    }
+    $keys = self::_prepMapKeys(
+      array_keys($values),
+      array_keys($filters),
+      $baseOptions[self::OPT_MISSING] ?? 0
+    );
 
     $filtered = [];
     foreach ($keys as $key) {
-      $value = $values[$key] ?? null;
-
-      $filter = $filter[$key]['filter'] ?? $filter[$key] ?? FILTER_DEFAULT;
-      $flags = is_int($filter[$key]['flags'] ?? null) ?
-        $filter[$key]['flags'] | $baseFlags :
-        $baseFlags;
-      $options = is_array($filter[$key]['options'] ?? null) ?
-        $filter[$key]['options'] + $baseOptions :
-        $baseOptions;
-
-      $applied = self::apply($value, $filter, $flags, $options);
-
-      if ($applied === null) {
-        if ($options[self::THROW] ?? false) {
-          throw new FilterException(FilterException::FILTER_FAILURE, ['definition' => $filter]);
-        }
-        if ($options[self::OPT_OMIT_NULL] ?? false) {
-          continue;
-        }
+      $options = $filters[$key][self::OPTIONS] ?? [];
+      if (is_array($options)) {
+        $options += $baseOptions;
       }
-      if (empty($applied) && ($options[self::OPT_OMIT_EMPTY] ?? false)) {
-        continue;
-      }
+      $flags = ($filters[$key][self::FLAGS] ?? 0) | $baseFlags;
+      $filter = $filters[$key][self::FILTER] ?? $filters[$key] ?? FILTER_DEFAULT;
 
-      $filtered[$key] = $applied;
+      $filtered[$key] = self::value($values[$key] ?? null, $filter, $flags, $options);
     }
     return $filtered;
   }
 
   /**
-   * applies a filter to multiple values.
+   * applies additional filtering to a filtered result(set).
    *
-   * @param mixed $values   values to filter (scalar values will be coerced to array)
-   * @param mixed $filter   filter to apply
-   * @param int   $flags    filter flags
-   * @param array $options  filter options
-   * @return array          the filtered values
+   * @param mixed $results  results returned from a filter method
+   * @param int   $flags    bitmask of *_RESULT|*_ON_FAILURE flags
+   * @return mixed          the post-filtered result
    */
-  public static function walk($values, $filter, int $flags = 0, array $options = []) : array {
-    if (! is_array($values)) {
-      $values = ($values instanceof Traversable) ?
-        iterator_to_array($values) :
-        ($values === null ? [] : [$values]);
-    }
-    $flags |= self::REQUIRE_ARRAY;
+  public static function result($results, int $flags) {
+    $array = is_array($results);
 
-    return self::apply($value, $filter, $flags, $options);
+    if (Vars::flags(self::NULL_EMPTY_RESULT, $flags)) {
+      if ($array) {
+        $results = array_map(function ($v) { return empty($v) ? null : $v; }, $results);
+      } elseif (empty($results)) {
+        $results = null;
+      }
+    }
+
+    if (
+      Vars::flag(self::THROW_ON_FAILURE, $failure) &&
+      ($results === null || $array && in_array(null, $results))
+    ) {
+      throw new FilterException(FilterException::FILTER_FAILURE);
+    }
+
+    return (Vars::flag(self::OMIT_ON_FAILURE, $failure) && $array) ?
+      array_filter($results, function ($v) { return $v !== null; }) :
+      $results;
   }
 
   /**
-   * resolves filter aliases, applies default flags and options.
+   * applies a filter to a value.
    *
-   * @param mixed $filter   filter
-   * @param int   $flags    filter flags
-   * @param array $options  filter options
-   * @return array          [filter, flags, options] tuple
-   */
-  protected static function _prep($filter, int $flags, array $options) : array {
-    // always null on failure
-    $flags |= FILTER_NULL_ON_FAILURE;
-
-    // filter shorthands
-    if (is_callable($filter)) {
-      // callback function
-      $options = $filter;
-      $filter = FILTER_CALLBACK;
-    } elseif (is_array($filter) && isset($filter[0], $filter[1], $filter[2])) {
-      // [filter, flags, options] tuple
-      list($filter, $baseFlags, $baseOpts) = $filter;
-      $flags |= $baseFlags;
-      $options += $baseOpts;
-    } elseif (Vars::isRegex($filter)) {
-      // regular expression (might be PRO instance)
-      $options[self::OPT_REGEX] = (string) $filter;
-      $filter = FILTER_VALIDATE_REGEXP;
-    } elseif (is_string($filter)) {
-      // type/pseudotype/classname
-      $options = function ($value) use ($filter) {
-        return self::_validateType($value, $filter);
-      };
-      $filter = FILTER_CALLBACK;
-    }
-
-    if (! is_int($filter)) {
-      throw new FilterException(FilterException::INVALID_FILTER, ['definition' => $filter]);
-    }
-
-    return [$filter, $flags, $options];
-  }
-
-  //protected static function _validateArray($value) {}
-
-  /**
-   * validates value as date/time and returns DateTime on success.
+   * filters may be provided as one of:
+   *  - one of the FILTER_VALIDATE_* or Filter::* shorthand constants.
+   *  - a callback function for FILTER_CALLBACK.
+   *  - a regular expression or PRO instance for FILTER_VALIDATE_REGEX.
    *
-   * @param mixed $value    the value to filter
-   * @return DateTime|null  a DateTime instance on success; null otherwise
+   * @param mixed $value      value to filter
+   * @param mixed $filter     filter to apply
+   * @param int   $flags      bitmask of filter flags
+   * @param array $opts       map of filter options
+   * @throws FilterException  if filter is invalid
+   * @return mixed            the filtered value
    */
-  protected static function _validateDateTime($value) {
+  public static function value($value, $filter, int $flags = 0, array $opts = []) {
     try {
-      return ($datetimeable instanceof DateTimeInterface) ?
-        $datetimeable :
-        new DateTime($datetimeable);
+      list($filter, $filterFlags) = self::_prepFilter($filter, $flags, $opts);
+      return (new Handler)
+        ->throw(E_ALL)
+        ->during('filter_var', $value, $filter, $filterFlags);
+    } catch (FilterException $e) {
+      throw $e;
+    } catch (TypeError $e) {
+      throw new FilterException(FilterException::INVALID_FILTER, $e, ['filter' => $filter]);
+    } catch (Throwable $e) {
+      throw new FilterException(FilterException::BAD_CALL_RIPLEY, $e);
+    }
+  }
+
+  /**
+   * applies a filter to each of a collection of values.
+   *
+   * @param array $values     list of values to filter
+   * @param mixed $filter     filter to apply (@see Filter::value() $filter)
+   * @param int   $flags      bitmask of filter flags
+   * @param array $opts       map of filter options
+   * @throws FilterException  if filter is invalid
+   * @return array            the filtered values
+   */
+  public static function walk(array $values, $filter, int $flags = 0, array $opts = []) : array {
+    $filtered = [];
+    foreach ($values as $value) {
+      $filtered[] = self::value($value, $filter, $flags, $opts);
+    }
+    return $filtered;
+  }
+
+
+  /**
+   * parses list of keys to include in mapping values to filters.
+   *
+   * @param array $values   value keys
+   * @param array $filters  filter keys
+   * @param int   $missing  mask of *_MISSING constants
+   * @return array          list of keys
+   */
+  protected static function _mapKeys(array $values, array $filters, int $missing) : array {
+    if (Vars::flag(self::ADD_MISSING, $missing)) {
+      $values = array_merge($values, $filters);
+    }
+    if (Vars::flag(self::OMIT_MISSING, $missing)) {
+      $values = array_intersect($values, $filters);
+    }
+    return $values;
+  }
+
+  /**
+   * parses and preps filter arguments.
+   *
+   * @param mixed $filter    filter definition
+   * @param int   $flags     filter flags
+   * @param array $opts      filter options
+   * @throw FilterException  if filter definition is invalid
+   * @return array           {
+   *    @type int            $0  FILTER_* constant
+   *    @type int            $1  bitmask of filter flags
+   *    @type array|callable $2  map of filter options, or callback for FILTER_CALLBACK
+   *  }
+   */
+  protected static function _prepFilter($filter, int $flags, array $opts) : array {
+    // callback function
+    if (is_callable($filter)) {
+      return [FILTER_CALLBACK, [self::FLAGS => $flags, self::OPTS => $filter]];
+    }
+
+    // [filter, flags, options] tuple
+    if (is_array($filter)) {
+      list($filter, $baseFlags, $baseOpts) = $filter + [FILTER_DEFAULT, 0, []];
+      return [
+        $filter,
+        [self::FLAGS => $flags | $baseFlags, self::OPTS => $opts + $baseOpts]
+      ];
+    }
+
+    // regular expression (might be PRO instance; stringify)
+    if (Vars::isRegex($filter)) {
+      return [
+        FILTER_VALIDATE_REGEX,
+        [self::FLAGS => $flags, self::OPTS => [[self::REGEX => (string) $filter] + $opts]]
+      ];
+    }
+
+    // filter literal
+    return [$filter, [self::FLAGS => $flags, self::OPTS => $opts]];
+  }
+
+
+  /**
+   * validates datetimeable values and converts to DateTime on success.
+   *
+   * this method is public only so filter_var may invoke it as a callback.
+   * it is not part of the public Filter API.
+   *
+   * @param mixed $value  the value to filter
+   * @return mixed|null   the filtered value on success; null otherwise
+   */
+  public static function _validateDateTime($value) {
+    try {
+      return new DateTime($value);
     } catch (Throwable $e) {
       return null;
     }
   }
 
-  //protected static function _validateRegex($value) {}
-
   /**
    * validates stringable values and converts to string on success.
    *
-   * scalars and objects with __toString() methods are "stringable."
+   * strings, ints, floats, bools, and objects with __toString() methods are "stringable."
    * note that booleans are returned as "true" and "false".
    *
-   * @param mixed $stringable  a stringable value
-   * @throws VarsException     if value cannot be cast to string
-   * @return string            the value as a string
+   * this method is public only so filter_var may invoke it as a callback.
+   * it is not part of the public Filter API.
+   *
+   * @param mixed $value  the value to filter
+   * @return mixed|null   the filtered value on success; null otherwise
    */
-  protected static function _validateString($value) {
-    switch (Vars::type($stringable)) {
+  public static function _validateString($value) {
+    switch (Vars::type($value)) {
       case Vars::OBJECT :
-        if (! method_exists($stringable, '__toString')) {
-          break;
-        }
+        return method_exists($value, '__toString') ? $value->__toString() : null;
       case Vars::FLOAT :
       case Vars::INT :
       case Vars::STRING :
-        return (string) $stringable;
+        return (string) $value;
       case Vars::BOOL :
-      case Vars::NULL :
-        return json_encode($stringable);
+        return $value ? 'true' : 'false';
       default :
         return null;
     }
   }
-
-  protected static function _validateType($value, string $type) {}
 }

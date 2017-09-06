@@ -70,6 +70,6 @@ class FilterException extends Exceptable {
       )[$context['filter']] ?? $context['filter'];
     }
 
-    parent::addContext($context);
+    return parent::addContext($context);
   }
 }

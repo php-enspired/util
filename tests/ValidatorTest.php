@@ -177,8 +177,8 @@ class ValidatorTest extends TestCase {
   public function testDuring(array $times, int $expected) {
     list($subject, $start, $end) = $times;
     $this->assertEquals(
-      Validator::during($subject, $start, $end),
-      in_array($expected, [0, 1, 2])
+      in_array($expected, [0, 1, 2]),
+      Validator::during($subject, $start, $end)
     );
   }
 

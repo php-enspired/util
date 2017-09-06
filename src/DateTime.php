@@ -72,7 +72,7 @@ class DateTime extends DateTimeImmutable {
    * @param mixed $timezone  datetimezone string or instance
    */
   public function __construct($time = 'now', $timezone = null) {
-    if (is_int($time) || is_float($time)) {
+    if (filter_var($time, FILTER_VALIDATE_FLOAT) !== false) {
       $time = "@{$time}";
     }
     if (strpos($time, '@') === 0 && strpos($time, '.')) {

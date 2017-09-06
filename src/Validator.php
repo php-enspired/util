@@ -176,15 +176,20 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function after($value, $compare) : bool {
-    $after = Vars::filter($compare, Vars::DATETIME);
-    if (! $after) {
+    $compareDT = ($compare instanceof DateTimeInterface) ?
+      $compare :
+      Filter::value($compare, Filter::DATETIME);
+    if (! $compareDT) {
       throw new ValidatorException(
         ValidatorException::INVALID_TIME_VALUE,
         ['time' => $compare]
       );
     }
-    $value = Vars::filter($value, Vars::DATETIME);
-    return ($value !== null) ? self::greater($value, $after) : false;
+
+    $valueDT = ($value instanceof DateTimeInterface) ?
+      $value :
+      Filter::value($value, Filter::DATETIME);
+    return self::greater($valueDT, $compareDT);
   }
 
   /**
@@ -263,15 +268,21 @@ class Validator {
    * @return bool                                  true if validation succeeds; false otherwise
    */
   public static function before($value, $compare) : bool {
-    $before = Vars::filter($compare, Vars::DATETIME);
-    if (! $before) {
+    $compareDT = ($compare instanceof DateTimeInterface) ?
+      $compare :
+      Filter::value($compare, Filter::DATETIME);
+    if (! $compareDT) {
       throw new ValidatorException(
         ValidatorException::INVALID_TIME_VALUE,
         ['time' => $compare]
       );
     }
-    $value = Vars::filter($value, Vars::DATETIME);
-    return ($value !== null) ? self::less($value, $before) : false;
+
+    $valueDT = ($value instanceof DateTimeInterface) ?
+      $value :
+      Filter::value($value, Filter::DATETIME);
+
+    return self::less($valueDT, $compareDT);
   }
 
   /**
@@ -354,17 +365,19 @@ class Validator {
    * @return bool                                true if validation succeeds; false otherwise
    */
   public static function during($value, $start, $end) : bool {
-    $dtStart = Vars::filter($start, Vars::DATETIME);
-    if (! $dtStart) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $start]);
-    }
-    $dtEnd = Vars::filter($end, Vars::DATETIME);
-    if (! $dtEnd) {
-      throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $end]);
+    foreach (['start' => $start, 'end' => $end] as $arg => $val) {
+      ${"{$arg}DT"} = ($val instanceof DateTimeInterface) ?
+        $val :
+        Filter::value($val, Filter::DATETIME);
+      if (! ${"{$arg}DT"}) {
+        throw new ValidatorException(ValidatorException::INVALID_TIME_VALUE, ['time' => $val]);
+      }
     }
 
-    $value = Vars::filter($value, Vars::DATETIME);
-    return ($value !== null) ? self::from($value, $dtStart, $dtEnd) : false;
+    $valueDT = ($value instanceof DateTimeInterface) ?
+      $value :
+      Filter::value($value, Filter::DATETIME);
+    return self::from($valueDT, $startDT, $endDT);
   }
 
   /**

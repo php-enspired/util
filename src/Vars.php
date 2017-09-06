@@ -108,74 +108,15 @@ class Vars {
   }
 
   /**
-   * filters values.
+   * checks whether a given bit ("flag") is set on a bitmask.
    *
-   * accepts:
-   * - built-in php filters: @see http://php.net/filter_var
-   * - callables: will use FILTER_CALLBACK
-   * - regular expressions (strings or PRO instances): will use FILTER_VALIDATE_REGEX
-   * - Vars::{(pseudo)type} constants: will filter for given type
-   * - fully qualified classnames: will filter for given class
-   *
-   * will require a scalar value unless COERCE|REQUIRE_ARRAY flags are set.
-   *
-   * @param mixed $value    the value to filter
-   * @param mixed $filter   the filter to apply
-   * @param int   $flags    filter flags
-   * @param array $options  filter options
-   * @throws VarsException  if filter definition is invalid, or if a callback throws
-   * @return mixed|null     the filtered value on success; or null on failure
+   * @param int $flag  flag to check for
+   * @param int $mask  bitmask
+   * @return bool      true if flag is set; false otherwise
    */
-  //public static function filter($value, $filter, int $flags = 0, array $options = []) {
-  //  // parse filter definition
-  //  $filter = [
-  //    self::BOOL => FILTER_VALIDATE_BOOLEAN,
-  //    self::FLOAT => FILTER_VALIDATE_FLOAT,
-  //    self::INT => FILTER_VALIDATE_INT
-  //  ][$filter] ?? $filter;
-  //
-  //  if (is_callable($filter)) {
-  //    $options = $filter;
-  //    $filter = FILTER_CALLBACK;
-  //  } elseif (self::isRegex($filter)) {
-  //    if ($filter instanceof PRO) {
-  //      $filter = $filter->__toString();
-  //    }
-  //    $options[self::OPT_REGEX] = $filter;
-  //    $filter = FILTER_VALIDATE_REGEXP;
-  //  } elseif (is_string($filter)) {
-  //    $filter = function ($value) use ($filter) {
-  //      if (! Vars::typeCheck($value, $filter)) {
-  //        return null;
-  //      }
-  //      return (method_exists(Vars::class, "to{$filter}")) ?
-  //        Vars::{"to{$filter}"}($value) :
-  //        $value;
-  //    };
-  //  }
-  //
-  //  // pre-filter for array vs. scalar constraints
-  //  if (($flags & FILTER_REQUIRE_ARRAY === FILTER_REQUIRE_ARRAY) && ! is_array($value)) {
-  //    return is_array($options[self::OPT_DEFAULT] ?? null) ?
-  //      $options[self::OPT_DEFAULT] :
-  //      null;
-  //  }
-  //  if (($flags & FILTER_FORCE_ARRAY === FILTER_FORCE_ARRAY) && ! is_array($value)) {
-  //    $value = ($value === null) ? [] : [$value];
-  //  } else {
-  //    $flags |= FILTER_REQUIRE_SCALAR;
-  //  }
-  //
-  //  // run
-  //  try {
-  //    $errorExceptions = (new Handler)->throw(E_ALL)->register();
-  //    return filter_var($value, $filter, ['flags' => $flags, 'options' => $options]);
-  //  } catch (\Throwable $e) {
-  //    throw new VarsException(VarsException::BAD_CALL_RIPLEY, $e);
-  //  } finally {
-  //    $errorExceptions->unregister();
-  //  }
-  //}
+  public static function flag(int $flag, int $mask) : bool {
+    return $flag & $mask === $flag;
+  }
 
   /**
    * checks whether a variable is a datetime value.
