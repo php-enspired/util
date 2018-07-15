@@ -20,6 +20,8 @@ declare(strict_types = 1);
 
 namespace at\util\tests;
 
+use Throwable;
+
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**

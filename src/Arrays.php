@@ -2,7 +2,7 @@
 /**
  * @package    at.util
  * @author     Adrian <adrian@enspi.red>
- * @copyright  2014 - 2016
+ * @copyright  2014 - 2018
  * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ use TypeError;
 use at\util\ArraysException;
 
 /**
- * utility functions for arrays.
+ * Utility functions for arrays.
  *
  * @method array Arrays::arsort()            @see http://php.net/arsort
  * @method array Arrays::asort()             @see http://php.net/asort
@@ -48,7 +48,7 @@ use at\util\ArraysException;
  * @method array Arrays::intersectUassoc()   @see http://php.net/array_intersect_uassoc
  * @method array Arrays::intersectUkey()     @see http://php.net/array_intersect_ukey
  * @method array Arrays::intersect()         @see http://php.net/array_intersect
- * @method array Arrays::key_exists()        @see http://php.net/array_key_exists
+ * @method array Arrays::keyExists()         @see http://php.net/array_key_exists
  * @method array Arrays::keys()              @see http://php.net/array_keys
  * @method array Arrays::krsort()            @see http://php.net/krsort
  * @method array Arrays::ksort()             @see http://php.net/ksort
@@ -87,8 +87,17 @@ use at\util\ArraysException;
  */
 class Arrays {
 
+  /**
+   * Keys for dig() $options tuple.
+   *
+   * @type int DIG_DELIM  a user-specified delimiter
+   * @type int DIG_THROW  throw on failure?
+   */
+  public const DIG_DELIM = 0;
+  public const DIG_THROW = 1;
+
   /** @type callable[]  list of supported array_* functions. */
-  const ARRAY_FUNCTIONS = [
+  protected const _ARRAY_FUNCTIONS = [
     'changeKeyCase' => 'array_change_key_case',
     'chunk' => 'array_chunk',
     'column' => 'array_column',
@@ -134,7 +143,7 @@ class Arrays {
   ];
 
   /** @type callable[]  list of supported by-reference array functions. */
-  const ARRAY_REF_FUNCTIONS = [
+  protected const _ARRAY_REF_FUNCTIONS = [
     'splice' => 'array_splice',
     'push' => 'array_push',
     'unshift' => 'array_unshift',
@@ -153,23 +162,38 @@ class Arrays {
   ];
 
   /**
-   * keys for various method options.
-   *
-   * @type int OPT_DELIM  a user-specified delimiter
-   * @type int OPT_THROW  throw on failure?
-   */
-  const OPT_DELIM = 0;
-  const OPT_THROW = 1;
-
-
-  /**
-   * proxies native php array functions.
+   * Proxies native php array functions.
    * @see <http://php.net/__callStatic>
-   * @see self::call()
+   *
+   * Both proxy names and native function names are supported.
+   * Note, supported by-ref functions *do not* operate on the subject array by reference.
+   * @see self::supportedArrayFunctions() for supported functions list.
+   *
+   * The user is responsible for argument types/order.
+   *
+   * @param string $name          function to proxy
+   * @param mixed  ...$arguments  function arguments
+   * @throws ArraysException      if the method is not supported
+   * @return mixed                subject array if the native function takes it by reference;
+   *                              native return value of the function otherwise
    */
   public static function __callStatic($name, $arguments) {
     try {
-      return self::call($name, ...$arguments);
+      $function = self::_ARRAY_FUNCTIONS[$name] ??
+        (in_array($name, self::_ARRAY_FUNCTIONS) ? $name : null);
+      if ($function) {
+        return $function(...$arguments);
+      }
+
+      $refFunction = self::_ARRAY_REF_FUNCTIONS[$name] ??
+        (in_array($name, self::_ARRAY_REF_FUNCTIONS) ? $name : null);
+      if ($refFunction) {
+        $subject = array_shift($arguments);
+        $refFunction($subject, ...$arguments);
+        return $subject;
+      }
+
+      throw new ArraysException(ArraysException::NO_SUCH_METHOD, ['method' => $name]);
     } catch (TypeError $e) {
       // re-throw from here
       throw new TypeError($e->getMessage(), $e->getCode(), $e);
@@ -177,47 +201,14 @@ class Arrays {
   }
 
   /**
-   * proxies native php array functions.
+   * Sorts array items into categories based on given key name.
    *
-   * @see self::ARRAY_FUNCTIONS and self::ARRAY_REF_FUNCTIONS for supported functions.
-   * both proxy names and native function names are supported.
-   * note, supported by-ref functions *do not* operate on the subject array by reference.
-   *
-   * the user is responsible for argument types/order.
-   *
-   * @param string $name          function to proxy
-   * @param mixed  ...$arguments  function arguments
-   * @throws ArraysException  if the method is not supported
-   * @return mixed                subject array if the native function takes it by reference;
-   *                              native return value of the function otherwise
-   */
-  public static function call(string $name, ...$arguments) {
-    $function = self::ARRAY_FUNCTIONS[$name] ??
-      (in_array($name, self::ARRAY_FUNCTIONS) ? $name : null);
-    if ($function) {
-      return $function(...$arguments);
-    }
-
-    $refFunction = self::ARRAY_REF_FUNCTIONS[$name] ??
-      (in_array($name, self::ARRAY_REF_FUNCTIONS) ? $name : null);
-    if ($refFunction) {
-      $subject = array_shift($arguments);
-      $refFunction($subject, ...$arguments);
-      return $subject;
-    }
-
-    throw new ArraysException(ArraysException::NO_SUCH_METHOD, ['method' => $name]);
-  }
-
-  /**
-   * sorts array items into categories based on given key name.
-   *
-   * @param array $subject         the subject array
-   * @param array $index           key of column to categorize by
+   * @param array $subject     the subject array
+   * @param array $index       key of column to categorize by
    * @throws ArrayssException  if key is not present in all rows
-   * @return array                 the categorized array
+   * @return array             the categorized array
    */
-  public static function categorize(array $subject, $key) {
+  public static function categorize(array $subject, $key) : array {
     $categorized = [];
     foreach ($subject as $row) {
       if (! isset($row[$key])) {
@@ -229,7 +220,7 @@ class Arrays {
   }
 
   /**
-   * checks whether a given value is in the subject array (values are compared strictly).
+   * Checks whether a given value is in the subject array (values are compared strictly).
    *
    * @param array $subject  the subject array
    * @param mixed $value    the value to check for
@@ -240,20 +231,22 @@ class Arrays {
   }
 
   /**
-   * looks up value at given path (if it exists).
+   * Looks up value at given path (if it exists).
    *
    * @param array  $subject  the subject array
    * @param string $path     delimited list of keys to follow
-   * @param array  $opts {
-   *    @type string self::OPT_DELIM  the delimiter to split the path on (defaults to '.')
-   *    @type bool   self::OPT_THROW  throw if the path does not exist (defaults to false)?
-   *  }
+   * @param array  $opts     execution options
+   *  - string self::DIG_DELIM  the delimiter to split the path on (defaults to '.')
+   *  - bool   self::DIG_THROW  throw if the path does not exist (defaults to false)?
    * @throws ArraysException  if the path does not exist in the subject array
-   * @return mixed                the value at the given path if it exists; null otherwise
+   * @return mixed            the value at the given path if it exists; null otherwise
    */
   public static function dig(array $subject, string $path, array $opts = []) {
-    $delim = $opts[self::OPT_DELIM] ?? '.';
-    $throw = $opts[self::OPT_THROW] ?? false;
+    $delim = $opts[self::DIG_DELIM] ?? '.';
+    Value::hint('$opts[Arrays::DIG_DELIM]', $delim, Value::STRING);
+
+    $throw = $opts[self::DIG_THROW] ?? false;
+    Value::hint('$opts[Arrays::DIG_THROW]', $throw, Value::BOOL);
 
     foreach (explode($delim, $path) as $key) {
       if (! (is_array($subject) && isset($subject[$key]))) {
@@ -268,30 +261,35 @@ class Arrays {
   }
 
   /**
-   * like array_merge_recursive(), but only merges arrays
+   * Like array_merge_recursive(), but only merges arrays
    * (no casting: arrays will never be merged with scalar values).
+   * @see <https://gist.github.com/adrian-enspired/e766b37334130ea04eaf>
    *
-   * @param array $subject  the subject array
-   * @param array …$arrays  secondary array(s) to extend with
-   * @return array          the extended array
+   * @param array $subject    the subject array
+   * @param array ...$arrays  secondary array(s) to extend with
+   * @return array            the extended array
    */
-  public static function extend(array $subject, array ...$arrays): array {
+  public static function extend(array $subject, array ...$arrays) : array {
     foreach ($arrays as $array) {
-      foreach ($array as $key=>$value) {
+      foreach ($array as $key => $value) {
         if (is_int($key)) {
           $subject[] = $value;
-        } elseif (isset($subject[$key]) && is_array($subject[$key]) && is_array($value)) {
-          $subject[$key] = static::extend($subject[$key], $value);
-        } else {
-          $subject[$key] = $value;
+          continue;
         }
+
+        if (isset($subject[$key]) && is_array($subject[$key]) && is_array($value)) {
+          $subject[$key] = self::extend($subject[$key], $value);
+          continue;
+        }
+
+        $subject[$key] = $value;
       }
     }
     return $subject;
   }
 
   /**
-   * indexes an array using the values of the given key
+   * Indexes an array using the values of the given key
    * (on index collision, later values will replace earlier values).
    *
    * @param array      $subject  the subject array
@@ -303,12 +301,12 @@ class Arrays {
   }
 
   /**
-   * determines whether an array is a list (has 0-based, sequentially incrementing indexes).
+   * Determines whether an array is a list (has 0-based, sequential, incrementing integer keys).
    *
    * @param array $subject  the subject array
    * @return bool           true if subject is a list; false otherwise
    */
-  public static function isList(array $subject): bool {
+  public static function isList(array $subject) : bool {
     $i = 0;
     foreach ($subject as $k=>$v) {
       if ($k !== $i) { return false; }
@@ -318,15 +316,15 @@ class Arrays {
   }
 
   /**
-   * selects one or more keys from an array at random.
+   * Selects one or more keys from an array at random.
    *
-   * this method uses random_int().
-   * use array_rand() unless you actually have need for cryptographic randomness.
+   * This method uses random_int().
+   * Use Arrays::rand() unless you actually have need for cryptographic randomness.
    *
-   * @param array $subject        the subject array
-   * @param int   $number         the number of items to pick (must be a positive integer)
+   * @param array $subject    the subject array
+   * @param int   $number     the number of items to pick (must be a positive integer)
    * @throws ArraysException  when trying to pick more items than are in the array
-   * @return scalar|scalar[]      the selected key(s)
+   * @return scalar|scalar[]  the selected key(s)
    */
   public static function random(array $subject, int $number = 1) {
     $count = count($subject);
@@ -343,7 +341,7 @@ class Arrays {
     }
 
     $randoms = [];
-    for ($i=0; $i<$number; $i++) {
+    for ($i = 0; $i < $number; $i++) {
       $random = random_int(0, count($keys) - 1);
       $randoms[] = $keys[$random];
       unset($keys[$random]);
@@ -353,34 +351,39 @@ class Arrays {
   }
 
   /**
-   * modifies an array's keys based on a callback function.
+   * Modifies an array's keys based on a callback function.
    *
-   * the provided callback should return an integer or string key,
+   * The provided callback should return an integer or string key,
    * or null to exclude the item from the re-keyed array.
    *
-   * @param array    $subject          the subject array
-   * @param callable $callback         (string|int $k, mixed $v) : string|int|null
-   * @throws BadFunctionCallException  if callback throws or returns an invalid key
-   * @return array                     the re-keyed array
+   * @param array    $subject   the subject array
+   * @param callable $callback  (string|int $k, mixed $v) : string|int|null
+   * @throws ArraysException    if callback throws or returns an invalid key
+   * @return array              the re-keyed array
    */
   public static function rekey(array $subject, callable $callback) : array {
     $rekeyed = [];
-    foreach ($subject as $k=>$v) {
-      $r = $callback($k, $v);
-      if ($r === null) {
-        continue;
+
+    try {
+      foreach ($subject as $k=>$v) {
+        $r = $callback($k, $v);
+        if ($r !== null) {
+          $rekeyed[$r] = $v;
+        }
       }
-      $rekeyed[$r] = $v;
+    } catch (Throwable $e) {
+      throw new ArraysException(ArraysException::BAD_CALL_RIPLEY, $e, ['method' => __METHOD__]);
     }
+
     return $rekeyed;
   }
 
   /**
-   * lists php array functions that this class supports (proxies).
+   * Lists php array functions that this class supports (proxies).
    *
    * @return callable[]  a list of php array function names
    */
   public static function supportedArrayFunctions() : array {
-    return array_merge(self::ARRAY_FUNCTIONS, self::ARRAY_REF_FUNCTIONS);
+    return self::_ARRAY_FUNCTIONS + self::_ARRAY_REF_FUNCTIONS;
   }
 }

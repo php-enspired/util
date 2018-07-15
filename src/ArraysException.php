@@ -2,7 +2,7 @@
 /**
  * @package    at.util
  * @author     Adrian <adrian@enspi.red>
- * @copyright  2014 - 2016
+ * @copyright  2014 - 2018
  * @license    GPL-3.0 (only)
  *
  *  This program is free software: you can redistribute it and/or modify it
@@ -23,20 +23,22 @@ namespace at\util;
 use at\exceptable\Exception as Exceptable;
 
 /**
- * error cases for arraytool methods.
+ * Error cases for Arrays utility methods.
  */
 class ArraysException extends Exceptable {
 
   /**
-   * @type int NO_SUCH_METHOD
-   * @type int INVALID_CATEGORY_KEY
-   * @type int INVALID_PATH
-   * @type int INVALID_SAMPLE_SIZE
+   * @type int NO_SUCH_METHOD        invoked a proxy array method that doesn't exist
+   * @type int INVALID_CATEGORY_KEY  given category key doesn't exist in all items
+   * @type int INVALID_PATH          path of keys doesn't exist in the array
+   * @type int INVALID_SAMPLE_SIZE   range error for picking items from an array
+   * @type int BAD_CALL_RIPLEY       uncaught exception from user-provided callback
    */
-  const NO_SUCH_METHOD = (1<<1);
-  const INVALID_CATEGORY_KEY = (1<<2);
-  const INVALID_PATH = (1<<3);
-  const INVALID_SAMPLE_SIZE = (1<<4);
+  const NO_SUCH_METHOD = 1;
+  const INVALID_CATEGORY_KEY = 2;
+  const INVALID_PATH = 3;
+  const INVALID_SAMPLE_SIZE = 4;
+  const BAD_CALL_RIPLEY = 5;
 
   /** @see Exceptable::INFO */
   const INFO = [
@@ -58,6 +60,10 @@ class ArraysException extends Exceptable {
       'message' => 'invalid sample size',
       'severity' => E_NOTICE,
       'tr_message' => 'sample size must be between 1 and {count}; {size} provided'
+    ],
+    self::BAD_CALL_RIPLEY => [
+      'message' => 'bad callback',
+      'message_tr' => 'uncaught exception thrown in callback for {method}: {__root_message__}'
     ]
   ];
 }
