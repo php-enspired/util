@@ -35,7 +35,7 @@ class JsonTest extends TestCase {
 
   /**
    * @covers Json::decode
-   * @dataProvider _decodeProvider
+   * @dataProvider _jsonProvider
    *
    * @param mixed|null  $data  decoded data if json is valid; null otherwise
    * @param string      $json  subject json
@@ -49,18 +49,8 @@ class JsonTest extends TestCase {
   }
 
   /**
-   * @return array[]  testcases
-   */
-  public function _decodeProvider() : array {
-    return array_filter(
-      $this->_jsonProvider(),
-      function ($a) { return $a[1] !== null; }
-    );
-  }
-
-  /**
    * @covers Json::encode
-   * @dataProvider _encodeProvider
+   * @dataProvider _jsonProvider
    *
    * @param mixed       $data  subject data
    * @param string|null $json  encoded json if data is jsonable; null otherwise
@@ -76,42 +66,40 @@ class JsonTest extends TestCase {
   /**
    * @return array[]  testcases
    */
-  public function _encodeProvider() : array {
-    return array_filter(
-      $this->_jsonProvider(),
-      function ($a) { return $a[0] !== null && $a[1] !== 'null'; }
-    );
-  }
-
-  /**
-   * @return array[]  testcases
-   */
   public function _jsonProvider() : array {
     return [
       ['', '""'],
-      [[], '[]'],
-      [new stdClass(), '{}'],
+      [[1, 2, 3], '[1,2,3]'],
+      [['a' => 'A', 'b' => 'B', 'c' =>'C'], '{"a":"A","b":"B","c":"C"}'],
       ['foo', '"foo"'],
       [1, "1"],
       [0.5, "0.5"],
       [true, 'true'],
       [false, 'false'],
       [null, 'null'],
+      //[fopen('php://temp', 'r'), null]
+    ];
+  }
 
-      [fopen('php://temp', 'r'), null],
-
+  /**
+   * @return array[]  testcases
+   */
+  public function _badJsonProvider() : array {
+    return [
+      //[fopen('php://temp', 'r'), null],
       [null, '"'],
       [null, ']'],
       [null, '{'],
       [null, '"{]'],
-      [null, "\t[]"],
+      [null, "\"\t\""],
       [null, "'foo'"]
     ];
   }
 
   /**
    * @covers Json::decode
-   * @dataProvider _decodeProvider
+   * @dataProvider _jsonProvider
+   * @dataProvider _badJsonProvider
    *
    * @param mixed       $data  subject data
    * @param string|null $json  encoded json if data is jsonable; null otherwise

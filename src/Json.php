@@ -50,7 +50,7 @@ class Json {
   protected const _DEFAULT_DEPTH = 512;
 
   public const HEX = JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS;
-  public const PRETTY = self::DEFAULT_ENCODE_OPTIONS | JSON_PRETTY_PRINT;
+  public const PRETTY = self::_DEFAULT_ENCODE_OPTIONS | JSON_PRETTY_PRINT;
 
   /**
    * Keys for decode/encode $opts tuple.
@@ -81,7 +81,7 @@ class Json {
    */
   public static function decode(string $json, array $opts = []) {
     $assoc = $opts[self::DECODE_ASSOC] ?? self::_DEFAULT_ASSOC;
-    Value::hint('$opts[Json::DECODE_ASSOC]', $assoc, Value::ARRAY);
+    Value::hint('$opts[Json::DECODE_ASSOC]', $assoc, Value::BOOL);
 
     $depth = $opts[self::DECODE_DEPTH] ?? self::_DEFAULT_DEPTH;
     Value::hint('$opts[Json::DECODE_DEPTH]', $depth, Value::INT);

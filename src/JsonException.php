@@ -58,7 +58,7 @@ class JsonException extends Exceptable {
   /**
    * {@inheritDoc}
    */
-  protected function _makeCode() : int {
+  protected function _makeCode(int $code = null) : int {
     $this->_lastError = true;
     return json_last_error();
   }
@@ -66,7 +66,7 @@ class JsonException extends Exceptable {
   /**
    * {@inheritDoc}
    */
-  protected function _makeMessage() : int {
+  protected function _makeMessage(string $message = null, int $code) : string {
     $message = $this->_lastError ?
       json_last_error_msg() :
       static::get_info($this->_code)['message'];
@@ -80,7 +80,7 @@ class JsonException extends Exceptable {
     }
 
     if (isset($this->_context['opts'])) {
-      $message .= "\n  opts: " . Json::encode($opts, [Json::PRETTY]);
+      $message .= "\n  opts: " . Json::encode($this->_context['opts'], [Json::PRETTY]);
     }
 
     return $message;
