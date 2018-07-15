@@ -15,7 +15,7 @@
     "irc": "irc://irc.freenode.net/php-enspired"
   },
   "require": {
-    "php": "^7.0",
+    "php": "^7.1",
     "php-enspired/exceptable": "^1.1"
   },
   "require-dev": {
