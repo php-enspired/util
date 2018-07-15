@@ -78,7 +78,7 @@ class Value {
    * Captures var_dump output and returns it as a string.
    * @see <http://php.net/var_dump>
    *
-   * @param mixed ...$expressions  expressions to debub
+   * @param mixed ...$expressions  expressions to debug
    * @return string                debugging output
    */
   public static function debug(...$expressions) : string {
