@@ -1,40 +1,40 @@
-![](https://img.shields.io/badge/%E2%9A%A0-unreleased-red.svg?colorA=e05d44&colorB=e05d44)  ![](https://img.shields.io/badge/PHP-7.0-blue.svg?colorB=8892BF)  ![](https://img.shields.io/badge/license-GPL_3.0_only-blue.svg)
+![](https://img.shields.io/badge/%E2%9A%A0-unreleased-red.svg?colorA=e05d44&colorB=e05d44)  ![](https://img.shields.io/badge/PHP-7.1-blue.svg?colorB=8892BF)  ![](https://img.shields.io/badge/license-GPL_3.0_only-blue.svg)
 
 util
 ====
 
 Various PHP utility classes and interfaces/traits for general use.
 
-* ### Arrays
+* #### Arrays
 
 Utility functions for arrays; also proxies many built-in php array functions, and removes the by-reference behavior found on the `*sort()` functions and some others.
 
-* ### DateTime
+* #### DateTime
 
-Extends the `DateTime` classes to accept floats/integers as unix timestamps, with microsecond support.
+Locale-aware formatting, integers/floats as unix timestamps, and better microsecond support.
 
-* ### Json
+* #### Json
 
-Wraps JSON functions with sensible defaults and exception-based error handling.
+Sensible defaults and exception-based error handling.
 
-* ### PDO
+* #### PDO
 
-Sets more secure default options for PDO, and provides a few convenience methods.
+More secure default options and a few convenience methods.
 
-* ### Validator
+* #### Validator
 
 Methods for validating common conditions (comparisons, sizes/ranges, lists, pattern matching) as well as structures for conditionally applying sets of rules.
 
-* ### Vars
+* #### Value
 
-Utility functions for general variable handling, such as type checking and filtering.
+General variable handling utilties, type checking, and filtering.
 
 dependencies
 ------------
 
 Requires:
 
-* php 7.0 or later
+* php 7.1 or later
 * Exceptable 1.1 or later (`composer require php-enspired/exceptable`)
 
 installation

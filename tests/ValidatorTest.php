@@ -22,11 +22,13 @@ namespace at\util\tests;
 
 use Throwable,
     DateTimeImmutable;
+
 use at\util\ {
   Validator,
   ValidatorException
 };
-use PHPUnit\Framework\TestCase;
+
+use at\util\tests\TestCase;
 
 class ValidatorTest extends TestCase {
 

@@ -78,7 +78,7 @@ class Json {
    * @throws RuntimeException  if json_decode fails
    * @return mixed             the decoded json data on success
    */
-  public static function decode(string $json, array $opts=[]) {
+  public static function decode(string $json, array $opts = []) {
     $assoc = $opts[self::DECODE_ASSOC] ?? self::DEFAULT_ASSOC;
     Vars::typeHint('$opts[Json::DECODE_ASSOC]', $assoc, 'bool');
     $options = $opts[self::DECODE_OPTIONS] ?? self::DEFAULT_DECODE_OPTIONS;
@@ -106,7 +106,7 @@ class Json {
    * @throws RuntimeException  if json_encode fails
    * @return string            the encoded json string on success
    */
-  public static function encode($data, array $opts): string {
+  public static function encode($data, array $opts = []): string {
     $options = $opts[self::ENCODE_OPTIONS] ?? self::DEFAULT_ENCODE_OPTIONS;
     Vars::typeHint('$opts[Json::ENCODE_OPTIONS]', $options, 'int');
     $depth = $opts[self::ENCODE_DEPTH] ?? self::DEFAULT_DEPTH;

@@ -25,7 +25,7 @@ use at\exceptable\Exception as Exceptable;
 /**
  * represents error cases in Validator methods.
  */
-class ValidatorException extends Exceptable {
+class RuleException extends Exceptable {
 
   /**
    * @type int BAD_CALL_RIPLEY

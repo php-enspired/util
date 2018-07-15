@@ -23,46 +23,40 @@ namespace at\util;
 use at\exceptable\Exception as Exceptable;
 
 /**
- * error cases for Vars methods.
+ * error cases for Value methods.
  */
-class VarsException extends Exceptable {
+class ValueException extends Exceptable {
 
   /**
    * @type int NO_EXPRESSIONS
    * @type int INVALID_FILTER
-   * @type int UNCASTABLE
    * @type int BAD_CALL_RIPLEY
-   * @type int INVALID_TIME_VALUE
+   * @type int FILTER_FAILURE
    */
   const NO_EXPRESSIONS = (1<<1);
   const INVALID_FILTER = (1<<2);
-  const UNCASTABLE = (1<<4);
   const BAD_CALL_RIPLEY = (1<<6);
-  const INVALID_TIME_VALUE = (1<<7);
+  const FILTER_FAILURE = (1<<8);
 
   /** @see exceptableTrait::INFO */
   const INFO = [
     self::NO_EXPRESSIONS => [
-      'message' => 'at least one $expression must be provided'
+      'message' => 'at least one $expression must be provided',
+      'severity' => Exceptable::WARNING
     ],
     self::INVALID_FILTER => [
-      'message' => 'invalid filter definition',
+      'message' => 'invalid $type filter',
       'severity' => Exceptable::WARNING,
-      'tr_message' => 'invalid filter definition: {definition}'
-    ],
-    self::UNCASTABLE => [
-      'message' => 'uncastable value',
-      'severity' => Exceptable::WARNING,
-      'tr_message' => 'value of type "{value}" cannot be cast to {type}'
+      'tr_message' => 'invalid $type filter: "{type}"'
     ],
     self::BAD_CALL_RIPLEY => [
       'message' => 'error invoking callable',
       'tr_message' => 'error invoking callable: {__rootMessage__}'
     ],
-    self::INVALID_TIME_VALUE => [
-      'message' => 'invalid date/time value',
-      'severity' => Exceptable::WARNING,
-      'tr_message' => '"{value}" is not a valid date/time value',
+    self::FILTER_FAILURE => [
+      'message' => 'value failed filter',
+      'severity' => Exceptable::NOTICE,
+      'tr_message' => 'filter "{filter}" failed with value: {value}'
     ]
   ];
 }
