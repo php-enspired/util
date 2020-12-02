@@ -1,4 +1,5 @@
-![](https://img.shields.io/github/release/php-enspired/util.svg)  ![](https://img.shields.io/badge/PHP-7.1-blue.svg?colorB=8892BF)  ![](https://img.shields.io/badge/license-GPL_3.0_only-blue.svg)
+This Package is Abandoned
+-------------------------
 
 util
 ====
